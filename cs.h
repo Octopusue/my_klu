@@ -53,7 +53,7 @@ int cs_entry(cs *T, int i, int j, double x);
 
 
 cs *cs_done(cs *C, void *w, void *x, int ok);
-
+int *cs_idone(int *p, cs *C, void *w, int ok);
 double cs_cumsum(int *p, int *c, int n);
 
 cs *cs_compress(const cs *T);

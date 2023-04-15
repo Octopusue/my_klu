@@ -522,3 +522,68 @@ int cs_spsolve(cs *G, const cs *B, int k, int *xi, double *x, const int *pinv, i
     return top;
 
 }
+
+int *cs_etree(const cs* A, int ata)
+{
+    int i, k, p, m, n, inext, *Ap, *Ai, *w, *parent, *ancestor, *prev;
+
+    if (!CS_CSC(A)) return NULL; 
+
+    m = A->m; n = A->n; Ap = A->p; Ai = A->i;
+    parent = (int *) cs_malloc(n, sizeof(int));
+    w  = (int *)cs_malloc(n +(ata ? m : 0), sizeof(int));
+    if (!w || !parent) return (cs_idone(parent, NULL, w, 0));
+
+    ancestor = w; prev = w + m;
+
+    if (ata) for (i = 0; i < m; i++) prev[i] = -i;
+
+    for (k = 0; k < n; k++)
+    {
+        parent[k] = -1;
+        ancestor[k] = -1;
+        for (p = Ap[k]; p < Ap[k+1]; p++)
+        {
+            i = ata ? prev[Ai[p]] : Ai[p];
+            for (; i != -1 && i < k; i=inext)
+            {
+                inext = ancestor[i];
+                ancestor[i] = k;
+                if (inext == -1) parent[k] = k;
+            }
+            if (ata) prev[Ai[p]] = k;
+        }
+
+    }
+
+    return (cs_idone(parent, NULL, w, i));
+
+}
+
+int cs_ereach(const cs *A, int k, const int *parent, int *s, int *w)
+{
+    int i, p, n, len, top, *Ap, *Ai;
+    if (!CS_CSC(A) || ! parent || !s || !w) return -1;
+
+    n = A->n; top = n; Ap = A->p; Ai = A->i;
+    CS_MARK(w, k);
+
+    for (p = Ap[k]; p < Ap[k+1]; p++)
+    {
+        i = Ai[p];
+        if (i>k) continue;
+        for (len=0; !CS_MARKED(w, i); i = parent[i]) /*traverse up etree*/
+        {
+            s[len] = i;
+            len++;
+            CS_MARK(w, i);
+        }
+        while(len>0)
+        {
+            s[--top] = s[--len];
+        }
+    }
+    for (p = top; p < n; p++) CS_MARK(w, s[p]);
+    CS_MARK(w, k);
+    return top;
+}

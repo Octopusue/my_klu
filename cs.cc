@@ -140,6 +140,12 @@ cs *cs_done(cs *C, void *w, void *x, int ok)
     cs_free(x);
     return (ok? C : cs_spfree(C));
 }
+int *cs_idone(int *p, cs *C, void *w, int ok)
+{
+    cs_spfree(C);
+    cs_free(w);
+    return (ok ? p : (int *)cs_free(p));
+}
 double cs_cumsum(int *p, int *c, int n)
 {
     int i, nz=0;

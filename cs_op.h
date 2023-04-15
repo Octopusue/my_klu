@@ -61,6 +61,11 @@ int cs_reach(cs *G, const cs *B, int k, int *xi, const int *pinv);
 int cs_dfs(int j, cs *G, int top, int *xi, int *pstack, const int *pinv);
 int cs_spsolve(cs *G, const cs *B, int k, int *xi, double *x, const int *pinv, int lo);
 
+/*Cholesky factorization*/
+int *cs_etree(const cs *A, int ata);
+int cs_ereach(const cs *A, int k, const int *parent, int *s, int *w);
+
+
 
 }
 
