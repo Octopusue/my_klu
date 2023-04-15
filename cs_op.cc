@@ -589,6 +589,10 @@ int cs_ereach(const cs *A, int k, const int *parent, int *s, int *w)
 }
 
 int *cs_post(const int * parent, int n){
+    /************************************************************
+    * eliminate tree ordered by parent ptr，child node point parent node。
+    * postordering tree ， parent node point child node
+    * *********************************************************/
     int j, k = 0, *post, *w, *head, *next, *stack;
 
     if (!parent) return NULL;
@@ -605,7 +609,7 @@ int *cs_post(const int * parent, int n){
     for (j = n-1; j>=0; j--)        /*traverse node in reverse order*/
     {
         if (parent[j]==-1) continue;
-        next[j] = head[parent[j]];  /**/
+        next[j] = head[parent[j]];  /* find j‘s father‘s other child*/
         head[parent[j]] = j;        /*head carry child of j*/
     }
 
