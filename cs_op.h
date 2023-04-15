@@ -65,7 +65,8 @@ int cs_spsolve(cs *G, const cs *B, int k, int *xi, double *x, const int *pinv, i
 int *cs_etree(const cs *A, int ata);
 int cs_ereach(const cs *A, int k, const int *parent, int *s, int *w);
 
-
+int *cs_post(const int * parent, int n);
+int cs_tdfs(int j, int k, int *head, const int *next, int *post, int *stack);
 
 }
 

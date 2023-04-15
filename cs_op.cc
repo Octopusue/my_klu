@@ -542,14 +542,14 @@ int *cs_etree(const cs* A, int ata)
     {
         parent[k] = -1;
         ancestor[k] = -1;
-        for (p = Ap[k]; p < Ap[k+1]; p++)
+        for (p = Ap[k]; p < Ap[k+1]; p++) /*searching path on the uppper triangle matrix*/
         {
             i = ata ? prev[Ai[p]] : Ai[p];
-            for (; i != -1 && i < k; i=inext)
+            for (; i != -1 && i < k; i=inext) 
             {
                 inext = ancestor[i];
                 ancestor[i] = k;
-                if (inext == -1) parent[k] = k;
+                if (inext == -1) parent[i] = k; /*former root of i link to current node k*/
             }
             if (ata) prev[Ai[p]] = k;
         }
@@ -586,4 +586,56 @@ int cs_ereach(const cs *A, int k, const int *parent, int *s, int *w)
     for (p = top; p < n; p++) CS_MARK(w, s[p]);
     CS_MARK(w, k);
     return top;
+}
+
+int *cs_post(const int * parent, int n){
+    int j, k = 0, *post, *w, *head, *next, *stack;
+
+    if (!parent) return NULL;
+
+    post = (int *) cs_malloc(n, sizeof(int));
+    w = (int *) cs_malloc(3*n, sizeof(int));
+
+    if (!w || !post) return (cs_idone(post, NULL, w, 0));
+
+    head = w; next = w+n; stack = w + 2 * n;
+
+    for (j = 0; j < n; j++) head[j] = -1;
+
+    for (j = n-1; j>=0; j--)        /*traverse node in reverse order*/
+    {
+        if (parent[j]==-1) continue;
+        next[j] = head[parent[j]];  /**/
+        head[parent[j]] = j;        /*head carry child of j*/
+    }
+
+    for (j = 0; j < n; j++)
+    {
+        if (parent[j] != -1) continue;
+        k = cs_tdfs(j, k, head, next, post, stack); /*k is the top of post list */
+    }
+    return (cs_idone(post, NULL, w, 1));
+
+
+}
+int cs_tdfs(int j, int k, int *head, const int *next, int *post, int *stack){
+    int i, p, top = 0;
+    if (!head || !next || !post || !stack) return -1;
+
+    while (top >= 0)
+    {
+        p = stack[top];
+        i = head[p];            /*get child of p*/
+        if (i == -1)
+        {
+            top--;
+            post[k++] = p;
+        }
+        else
+        {
+            head[p] = next[i]; /*remove i form child of p, get another child of p*/
+            stack[++top] = i; 
+        }
+    }
+    return k;
 }
