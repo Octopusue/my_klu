@@ -68,6 +68,7 @@ int cs_ereach(const cs *A, int k, const int *parent, int *s, int *w);
 int *cs_post(const int * parent, int n);
 int cs_tdfs(int j, int k, int *head, const int *next, int *post, int *stack);
 
+void firstdesc(int n, int *parent, int *post, int *first, int *level);
 }
 
 

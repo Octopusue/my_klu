@@ -591,7 +591,7 @@ int cs_ereach(const cs *A, int k, const int *parent, int *s, int *w)
 int *cs_post(const int * parent, int n){
     /************************************************************
     * eliminate tree ordered by parent ptr，child node point parent node。
-    * postordering tree ， parent node point child node
+    * postordering tree ， post is postorder node 
     * *********************************************************/
     int j, k = 0, *post, *w, *head, *next, *stack;
 
@@ -642,4 +642,27 @@ int cs_tdfs(int j, int k, int *head, const int *next, int *post, int *stack){
         }
     }
     return k;
+}
+
+void firstdesc(int n, int *parent, int *post, int *first, int *level)
+{
+    int len, i, k, r, s;
+    for (i = 0; i < n; i++) first[i] = -1;
+
+    for (k = 0; k < n; k++)
+    {
+        i = post[k];
+        len = 0;
+        /******************************************** 
+        * r == -1 represents root node, 
+        * first[r] != -1 represents node r has visited
+        * ********************************************/
+        for (r = i; r!=-1 && first[r] == -1; r = parent[r], len++)
+        {
+            first[r] = k;
+        }
+        len += (r==-1) ? -1 : level[r];         /* root node : visited */
+
+        for (s = i; s != r; s = parent[s]) level[s] = len--;
+    }
 }
