@@ -661,8 +661,8 @@ void firstdesc(int n, int *parent, int *post, int *first, int *level)
         {
             first[r] = k;
         }
-        len += (r==-1) ? -1 : level[r];         /* root node : visited */
+        len += (r==-1) ? -1 : level[r];         /* root node : visited (end of path) */
 
-        for (s = i; s != r; s = parent[s]) level[s] = len--;
+        for (s = i; s != r; s = parent[s]) level[s] = len--;/*level represent length from root node*/
     }
 }
