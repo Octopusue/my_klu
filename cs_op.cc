@@ -667,3 +667,103 @@ void firstdesc(int n, int *parent, int *post, int *first, int *level)
         for (s = i; s != r; s = parent[s]) level[s] = len--;/*level represent length from root node*/
     }
 }
+
+
+
+int *rowcnt(cs *A, int *parent, int *post){
+    int i, j, k, len, s, p, jprev, q, n, sparent, jleaf;
+    int  *Ap, *Ai, *maxfirst, *ancestor, *preleaf, *w, *first, *level, *rowcount;
+
+    n = A->n; Ap = A->p; Ai = A->i;
+
+    w = (int *) cs_malloc(5*n, sizeof(int));
+    ancestor = w; maxfirst = w + n; preleaf = w + 2 * n; 
+    first = w + 3 * n; level = w + 4 * n;
+
+    rowcount = (int *) cs_malloc(n, sizeof(int));
+
+    firstdesc(n, parent, post, first, level);
+
+    for (i = 0; i < n; i++)
+    {
+        rowcount[i] = 1;
+        preleaf[i] = -1;
+        maxfirst[i] = -1;
+        ancestor[i] = i;
+    }
+
+    for (k = 0; k < n; k++)
+    {
+        j = post[k];
+        for (p = Ap[j]; p < Ap[j+1]; p++)
+        {
+            i = Ai[p];
+            q = cs_leaf(i, j, first, maxfirst, preleaf, ancestor, &jleaf);
+            if (jleaf){
+                rowcount[i] += level[j] - level[q]; /*every j leaf node provides i row count*/
+            }
+
+        }
+        if (parent[j] != -1){
+            ancestor[j] = parent[j];
+        }
+    }
+    cs_free(w);
+    return rowcount;
+}
+int cs_leaf(int i, int j, const int *first, int *maxfirst, int *prevleaf, int *ancestor, int *jleaf){
+    int q, s, sparent, jprev;
+
+    if (!first || !maxfirst || !prevleaf || !ancestor || !jleaf) return -1;
+    jleaf = 0;
+    if (i <= j || first[j] <= maxfirst[i]) return -1;   /* j is not leaf of i */
+    /*j is a leaf of i subtree*/
+    maxfirst[i] = j;
+    jprev = prevleaf[i];                                /*previous leaf of i subtree*/
+    prevleaf[i] = j;
+
+    *jleaf = (jprev == -1) ? 1 : 2;                     /*j is first leaf of i or j is subsequent leaf of i*/
+
+    if (*jleaf ==1) return i;
+    for (q = jprev; q != ancestor[q]; q = ancestor[q]); /*find q root*/
+
+    for (s = jprev; s != q; s = sparent)
+    {
+        sparent = ancestor[s];
+        ancestor[s] = q;
+    }
+    return q;                                           /* least common ancestor (jprev, j)*/
+}
+
+static void init_ata(cs *AT, const int *post, int *w, int **head, int **next);
+int *cs_counts(const cs *A, const int *parent, const int *post, int ata){
+    int i, j, k, n, m, J, s, p, q, jleaf;
+    int *ATp, *ATi, *maxfirst, *prevleaf, *ancestor, *head=NULL, *next=NULL, *colcount, *w, *first, *delta;
+    cs *AT;
+    if (!CS_CSC(A) || !parent || !post) return NULL;
+
+    m = A->m; n = A->n;
+    s = 4 * n + (ata ? (n+m+1) : 0);
+    delta = colcount = (int *) cs_malloc(n, sizeof(int));
+    w = (int *)cs_malloc(s, sizeof(int));
+    AT = cs_transpose(A, 0);
+    if (!AT || !colcount || !w) return (cs_idone(colcount, AT, w, 0));
+
+    ancestor = w; maxfirst = w + n; prevleaf = w + 2 * n; first = w + 3 * n;
+    for (k =0; k < s; k++) w[k] = -1;
+
+    for (k =0; k<n; k++)
+    {
+        j = post[k];
+        delta[j] = (first[j] == -1) ? 1 : 0;
+        for (; j!=1 && first[j] == -1; j = parent[j]) first[j] = k;
+    }
+
+    ATp = AT->p; ATi = AT ->i;
+    if (ata) init_ata(AT, post, w, &head, &next);
+
+    
+
+
+
+}

@@ -69,6 +69,12 @@ int *cs_post(const int * parent, int n);
 int cs_tdfs(int j, int k, int *head, const int *next, int *post, int *stack);
 
 void firstdesc(int n, int *parent, int *post, int *first, int *level);
+
+int *rowcnt(cs *A, int *parent, int *post);
+int cs_leaf(int i, int j, const int *first, int *maxfirst, int *prevleaf, int *ancestor, int *jleaf);
+
+
+int *cs_counts(const cs *A, const int *parent, const int *post, int ata);
 }
 
 

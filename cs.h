@@ -15,6 +15,9 @@ using namespace std;
 #define CS_DATE "20230414"
 #define CS_COPYRIGHT "liqun.su"
 
+#define HEAD(k, j) (ata ? head[k] : j)
+#define NEXT(J) (ata ? next[J] : -1)
+
 typedef struct cs_sparse
 {
     int nzmax;   /*maximum number of entries*/
