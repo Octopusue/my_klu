@@ -858,3 +858,45 @@ csn *cs_chol(const cs *A, const css *S)
     return (cs_ndone(N, E, c, x, 1));
 
 }
+
+
+double cs_house(double *x, double *beta, int n){
+    double s, sigma = 0;
+    int i;
+    if (! x || !beta) return -1;
+
+    for (i = 1; i < n; i++)
+        sigma += x[i]*x[i];
+
+    if (sigma==0)
+    {
+        s = fabs(x[0]);
+        (*beta) = (x[0] <= 0) ? 2 : 0;
+        x[0] = 1;
+    }
+    else{
+        s = sqrt(x[0] * x[0] + sigma);
+        x[0] = (x[0] <= 0) ? (x[0] - s) : (-sigma/(x[0] + s));
+        (*beta) = -1./(s*x[0]);
+    }
+
+    return s;
+}
+int cs_happly(const cs *V, int i, double beta, double *x){
+    int p, *Vp, *Vi;
+    double *Vx, tau = 0;
+
+    if (!CS_CSC(V) || !x) return 0;
+    Vp = V->p; Vi = V->i; Vx = V->x;
+    for (p = Vp[i]; p < Vp[i+1]; p++)
+    {
+        tau += Vx[p] * x[Vi[p]];
+    }
+    tau += beta;
+    for (p = Vp[i]; p < Vp[i+1]; p++)
+    {
+        x[Vi[p]] -= Vx[p] * tau;
+    }
+    return 1;
+
+}

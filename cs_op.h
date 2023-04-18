@@ -11,6 +11,13 @@ double cs_norm(const cs *A);
 
 cs *cs_transpose(const cs *A, int values);
 
+double cs_house(double *x, double *beta, int n);
+/*dense vector QR factorization*/
+int cs_happly(const cs *V, int i, double beta, double *x);
+/*sparse QR factorzation*/
+
+
+
 int cs_gaxpy(const cs *A, const double *x, double *y);
 
 int cs_scatter(const cs* A, int j, double beta, int *w, double *x, int mark, cs *C, int nz);
@@ -80,6 +87,9 @@ int *cs_counts(const cs *A, const int *parent, const int *post, int ata);
 /*Up-Looking Cholesky*/
 csn *cs_chol(const cs *A, const css *S);
 /*Left-Looking Cholesky*/
+
+
+
 }
 
 
