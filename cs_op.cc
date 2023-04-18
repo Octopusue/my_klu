@@ -861,6 +861,7 @@ csn *cs_chol(const cs *A, const css *S)
 
 
 double cs_house(double *x, double *beta, int n){
+    /*it ensures s = norm(x, 2). It computes beta and s and overwrites x with v*/
     double s, sigma = 0;
     int i;
     if (! x || !beta) return -1;
@@ -883,6 +884,15 @@ double cs_house(double *x, double *beta, int n){
     return s;
 }
 int cs_happly(const cs *V, int i, double beta, double *x){
+    /******************************************************* 
+     * happly means H apply
+     * it apploes a HouseHolder reflection to a dense vector x, 
+     * where v is sparse
+     * it overwrites x with Hx = x - v*(beta*v'*x) 
+     * 
+     * HouseHolder Reflection convert column vector into new coorrdinate
+     * 
+     * ******************************************************/
     int p, *Vp, *Vi;
     double *Vx, tau = 0;
 
@@ -892,11 +902,194 @@ int cs_happly(const cs *V, int i, double beta, double *x){
     {
         tau += Vx[p] * x[Vi[p]];
     }
-    tau += beta;
+    tau *= beta;
     for (p = Vp[i]; p < Vp[i+1]; p++)
     {
         x[Vi[p]] -= Vx[p] * tau;
     }
     return 1;
 
+}
+
+static int cs_vcount(const cs *A, css *S)
+{
+    int i, k, p, pa, n = A->n, m = A->m, *Ap = A->p, *Ai = A->i, 
+        *next, *head, *tail, *nque, *pinv, *leftmost, *w, *parent = S->parent;
+
+    S->pinv = pinv = (int *)cs_malloc(n+m, sizeof(int));
+    S->leftmost = leftmost = (int *)cs_malloc(m, sizeof(int));
+    w = (int *)cs_malloc(m + 3 * n, sizeof(int));
+
+    if (!pinv || !w || !leftmost) 
+    {
+        cs_free(w);     /* pinv and left most free later*/
+        return (0);
+    }
+
+    next = w; head = w + n; tail = w + m + n; nque = w + +2 * n;
+
+    for (k = 0; k < n; k++)
+    {
+        head[k] = -1;
+        tail[k] = -1;
+        nque[k] = 0;
+    }
+    for (i = 0; i < m; i++)
+        leftmost[i] = -1;
+    for (k = n-1; k >= 0; k--)
+    {
+        for (p = Ap[k]; p < Ap[k+1]; p++)
+        {
+            leftmost[Ai[p]] = k;
+        }
+    }
+    for (i = m-1; i >= 0; i--)
+    {
+        pinv[i] = -1;
+        k = leftmost[i];
+        if (k == -1) continue;
+        if (nque[k]++ == 0) tail[k] = i;
+        next[i] = head[k];
+        head[k] = i;
+    }
+    S->lnz = 0;
+    S->m2 = m;
+    for (k = 0; k < n; k++)
+    {
+        i = head[k];
+        S->lnz++;
+        if (i < 0) i = S->m2++;
+        pinv[i] = k;
+        if (--nque[k] <= 0) tail[pa] = tail[k];
+        next[tail[k]] = head[pa];
+        head[pa] = next[i];
+        nque[pa] += nque[k];
+    }
+    for (i = 0; i < m; i++)
+        if (pinv[i] < 0)
+            pinv[i] = k++;
+    cs_free(w);
+    return 1;
+
+
+}
+css *cs_sqr(int order, const cs* A, int qr){
+    int n, k, ok = 1, *post;
+    css *S;
+    if (!CS_CSC(A)) return NULL;
+
+    n = A->n;
+    S = (css *) cs_calloc(1, sizeof(css));
+
+    if (!S) return NULL;
+    S->q = cs_amd(order, A);
+    if (order && !S->q) return (cs_sfree(S));
+
+    if (qr)
+    {
+        cs *C = order ? cs_permute(A, NULL, S->q, 0): (cs *)A;
+        S->parent = cs_etree(C, 1);
+        post = cs_post(S->parent, n);
+        S->cp = cs_counts(C, S->parent, post, 1);
+        cs_free(post);
+        ok = C && S->parent && S->cp && cs_vcount(C, S);
+        if (ok)
+            for (S->unz = 0, k = 0; k < n; k++)
+                S->unz += S->cp[k];
+        ok = ok && (S->lnz >=0) && (S->unz >= 0);
+        if (order)
+            cs_spfree(C);
+    }
+    else{
+        S->unz = 4 *(A->p[n]) + n; /*for LU factorization only*/
+        S->lnz = S->unz;
+    }
+    return (ok? S:cs_sfree(S));
+
+}
+csn *cs_qr(const cs*A, const css *S){
+    double *Rx, *Vx, *Ax, *Beta, *x;
+    int i, k, p, m, n, vnz, p1, top, m2, len, col, rnz, 
+        *s, *leftmost, *Ap, *Ai, *parent, *Rp, *Ri, *Vp, *Vi, *w, *pinv, *q;
+
+    cs *R, *V;
+    csn *N;
+
+    if (!CS_CSC(A) || !S) return (NULL);
+
+    m = A->m; n = A->n; Ap = A->p; Ai = A->i; Ax = A->x;
+    q = S->q; parent = S->parent; pinv = S->pinv; m2 = S->m2;
+    vnz = S->lnz; rnz = S->unz; leftmost = S->leftmost;
+    
+    w = (int *)cs_malloc(m2 + n, sizeof(int));
+    x = (double *)cs_malloc(m2, sizeof(double));
+    N = (csn *)cs_calloc(1, sizeof(csn));
+
+    if (!w || !x || !N) return (cs_ndone(N, NULL, w, x, 0));
+
+    s = w + m2;
+    for (k = 0; k < m2; k++)
+        x[k] = 0;
+    N->L = V = cs_spalloc(m2, n, vnz, 1, 0);
+    N->U = R = cs_spalloc(m2, n, rnz, 1, 0);
+    N->B = Beta = (double *)cs_malloc(n, sizeof(double));
+    if (!R || !V || !Beta) return (cs_ndone(N, NULL, w, x, 0));
+
+    Rp = R->p; Ri = R->i; Rx = R->x;
+    Vp = V->p; Vi = V->i; Vx = V->x;
+
+    for (i = 0; i <m2; i++) w[i] = -1;
+    rnz = 0; vnz = 0;
+    for (k = 0; k < n; k++)
+    {
+        Rp[k] = rnz;
+        Vp[k] = p1 = vnz;
+        w[k] = k;
+        Vi[vnz++] = k;
+        top = n;
+        col = q ? q[k] : k;
+        for (p = Ap[col]; p < Ap[col+1]; p++)
+        {
+            i = leftmost[Ai[p]];
+            for (len = 0; w[i] != k; i = parent[i])
+            {
+                s[len++] = i;
+                w[i] = k;
+            }
+            
+            while (len > 0)
+                s[--top] = s[--len];
+            i = pinv[Ai[p]];
+            x[i] = Ax[p];
+            if (i > k && w[i] <k)
+            {
+                Vi[vnz++] = i;
+                w[i] = k;
+            }
+        }
+        for (p = top; p < n; p++)
+        {
+            i = s[p];
+            cs_happly(V, i, Beta[i], x);
+            Ri[rnz] = i;
+            Rx[rnz++] = x[i];
+            x[i] = 0;
+            if (parent[i] == k)
+                vnz = cs_scatter(V, i, 0, w, NULL, k, V, vnz);
+        }
+
+        for (p = p1; p < vnz; p++)
+        {
+            Vx[p] = x[Vi[p]];
+            x[Vi[p]] = 0;
+        }
+        Ri[rnz] = k;
+        Rx[rnz++] = cs_house(Vx+p1, Beta+k, vnz-p1);
+    
+
+    }
+
+    Rp[n] = rnz;
+    Vp[n] = vnz;
+    return cs_ndone(N, NULL, w, x, 1);
 }

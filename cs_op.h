@@ -88,7 +88,9 @@ int *cs_counts(const cs *A, const int *parent, const int *post, int ata);
 csn *cs_chol(const cs *A, const css *S);
 /*Left-Looking Cholesky*/
 
-
+/*QR factorazation*/
+css *cs_sqr(int order, const cs* A, int qr);
+csn *cs_qr(const cs*A, const css *S);
 
 }
 
