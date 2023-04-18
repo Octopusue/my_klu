@@ -101,7 +101,7 @@ cs *cs_multiply(const cs* A, const cs* B)
     w = (int *)cs_calloc(m, sizeof(int));
     values=(A->x !=NULL)&&(Bx!=NULL);
     x = values ? (double *)cs_malloc(m, sizeof(double)) : NULL;//tmp var for every columns after multiply
-    C = cs_spalloc(m, n, anz+bnz, values, 0);
+    C = cs_spalloc(m, n, anz+bnz, values, 0);// initiate enough mem;
     
     if (!C || !w || (values && !x)) return (cs_done(C, w, x, 0));
 
@@ -122,6 +122,9 @@ cs *cs_multiply(const cs* A, const cs* B)
             /******************************************** 
             * Bi[p] is i row of B, and it need multiply i columns of A 
             * nz of C is accumulated
+            * B are iterating by rows and columns, downward for every column;
+            * Bi[p] is k which need to contract with A[i][k];
+            * once jump out of p iteration, C[][j] becomes settled
             * *******************************************/
             nz = cs_scatter(A, Bi[p], Bx? Bx[p] : 1, w, x, j+1, C, nz);
         }
@@ -541,17 +544,30 @@ int *cs_etree(const cs* A, int ata)
     for (k = 0; k < n; k++)
     {
         parent[k] = -1;
-        ancestor[k] = -1;
+        ancestor[k] = -1;/*ancestor keeps it's ancestor beyond it's father*/
         for (p = Ap[k]; p < Ap[k+1]; p++) /*searching path on the uppper triangle matrix*/
         {
             i = ata ? prev[Ai[p]] : Ai[p];
-            for (; i != -1 && i < k; i=inext) 
+            for (; i != -1 && i < k; i=inext) /*traverse up trangle matrix*/
             {
                 inext = ancestor[i];
-                ancestor[i] = k;
+                ancestor[i] = k;                /*ancestor become large node, path compression*/
                 if (inext == -1) parent[i] = k; /*former root of i link to current node k*/
             }
-            if (ata) prev[Ai[p]] = k;
+            /************ SEARCH FOR ELIMINATION TREE WHEN A IS NOT SYMMETIC *******************
+            * if A is not sym pos denfinate matrix; we calculate tree of A'A
+            * A(i, 0) may have values do not exist in A(0, i);
+            * we have give up triangle search more node
+            * It is column eliminate tree
+            * for example ancestor of 6 maybe 1;
+            * the next time node 6 need to append to tree
+            * if 1 node does not attach to the tree, it will append 
+            * 
+            * what if node 6 does not show up?
+            * even ata==0, node 6 become it own tree
+            * ata==1, we always meet node 6 in iteration!!!!
+            ************************************************************************************/
+            if (ata) prev[Ai[p]] = k;           
         }
 
     }
