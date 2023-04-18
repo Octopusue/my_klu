@@ -73,6 +73,16 @@ cs *cs_spfree(cs *A)
     cs_free(A->x);
     return (cs*)cs_free(A);
 }
+css *cs_sfree(css *S)
+{
+    if (!S) return NULL;
+    cs_free(S->pinv);
+    cs_free(S->q);
+    cs_free(S->parent);
+    cs_free(S->cp);
+    cs_free(S->leftmost);
+    return (css *)(cs_free(S));
+}
 cs *cs_spalloc(int m , int n, int nzmax, int values, int triplet)
 {
     cs *A = (cs*)cs_calloc(1, sizeof(cs));
@@ -145,6 +155,21 @@ int *cs_idone(int *p, cs *C, void *w, int ok)
     cs_spfree(C);
     cs_free(w);
     return (ok ? p : (int *)cs_free(p));
+}
+
+csn *cs_nfree(csn *N){
+    if (!N) return NULL;
+    cs_spfree(N->L);
+    cs_spfree(N->U);
+    cs_free(N->pinv);
+    cs_free(N->B);
+    return (csn *)(cs_free(N));
+}
+csn *cs_ndone(csn *N, cs *C, void *w, void *x, int ok){
+    cs_spfree(C);
+    cs_free(w);
+    cs_free(x);
+    return (ok? N : cs_nfree(N));
 }
 double cs_cumsum(int *p, int *c, int n)
 {
@@ -372,3 +397,27 @@ int cs_print(const cs *A, int brief)
 
 }
 
+css *cs_schol(int order, const cs *A){
+    int n, *c, *post, *P;
+    cs *C;
+    css *S;
+    if (!CS_CSC(A)) return NULL;
+    n = A->n;
+    S = (css *)cs_calloc(1, sizeof(css));
+
+    if (!S) return NULL;
+    P = cs_amd(order, A);   /*find a permutation P so that PAP^T has fewer nonzero in its factorization than A*/
+    S->pinv = cs_pinv(P, n);
+    cs_free(P);
+    if (order && !S->pinv) return (cs_sfree(S));
+    C = cs_symperm(A, S->pinv, 0);
+    S->parent = cs_etree(C, 0);
+    post = cs_post(S->parent, n);
+    c = cs_counts(C, S->parent, post, 0);
+    cs_free(post);
+    cs_spfree(C);
+    S->cp = (int *)cs_malloc(n+1, sizeof(int));
+    S->unz = S->lnz = cs_cumsum(S->cp, c, n);
+    cs_free(c);
+    return (S->lnz>=0? S: cs_sfree(S));
+}

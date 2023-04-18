@@ -28,6 +28,32 @@ typedef struct cs_sparse
     double *x;   /*numerical values, size nzmax*/
     int nz;      /*#of entries in triplet maxtrix, -1 for compress-col*/
 } cs;
+
+
+typedef struct cs_symbolic
+{
+    int *pinv;
+    int *q;
+    int *parent;
+    int *cp;
+    int *leftmost;
+    int m2;
+    double lnz;
+    double unz;
+} css;
+
+typedef struct cs_numeric
+{
+    cs *L;
+    cs *U;
+    int *pinv;
+    double *B;
+
+}csn;
+
+
+css *cs_schol(int order, const cs *A);
+
 extern "C" {
 void show_cs_details(cs *A);
 
@@ -44,6 +70,10 @@ void *cs_free(void *p);
 void *cs_realloc(void *p, int n, size_t size, int *ok);
 
 cs *cs_spfree(cs *A);
+css *cs_sfree(css *S);
+csn *cs_nfree(csn *N);
+csn *cs_ndone(csn *N, cs *C, void *w, void *x, int ok);
+
 
 cs *cs_spalloc(int m , int n, int nzmax, int values, int triplet);
 

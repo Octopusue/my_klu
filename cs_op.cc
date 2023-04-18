@@ -735,8 +735,20 @@ int cs_leaf(int i, int j, const int *first, int *maxfirst, int *prevleaf, int *a
     return q;                                           /* least common ancestor (jprev, j)*/
 }
 
-static void init_ata(cs *AT, const int *post, int *w, int **head, int **next);
+static void init_ata(cs *AT, const int *post, int *w, int **head, int **next){
+    int i, k, p, m = AT->n, n = AT->m, *ATp=AT->p, *ATi = AT->i;
+    *head = w + 4 * n; *next = w + 5 * n + 1;
+    for (k =0; k<n; k++) w[post[k]] = k;
+    for (i =0; i<m;i++)
+    {
+        for (k = n, p = ATp[i]; p <ATp[i+1]; p++)
+            k = CS_MIN(k, w[ATi[p]]);
+        (*next)[i] = (*head)[k];
+        (*head)[k] = i;
+    }
+}
 int *cs_counts(const cs *A, const int *parent, const int *post, int ata){
+    /*ata is 1 : (A^T)A  is computed; ata is 0: A is computed*/
     int i, j, k, n, m, J, s, p, q, jleaf;
     int *ATp, *ATi, *maxfirst, *prevleaf, *ancestor, *head=NULL, *next=NULL, *colcount, *w, *first, *delta;
     cs *AT;
@@ -755,15 +767,94 @@ int *cs_counts(const cs *A, const int *parent, const int *post, int ata){
     for (k =0; k<n; k++)
     {
         j = post[k];
-        delta[j] = (first[j] == -1) ? 1 : 0;
-        for (; j!=1 && first[j] == -1; j = parent[j]) first[j] = k;
+        delta[j] = (first[j] == -1) ? 1 : 0;        /* delta[j] == 1 if j is a leaf */
+        for (; j != -1 && first[j] == -1; j = parent[j]) first[j] = k;
     }
 
     ATp = AT->p; ATi = AT ->i;
     if (ata) init_ata(AT, post, w, &head, &next);
 
-    
+    for (i = 0; i < n; i++) ancestor[i] = j;
+    for (k = 0; k < n; k++) 
+    {
+        j = post[k];
+        if (parent[j] != -1) delta[parent[j]]--; /*if j is leaf delta[]*/
+        for (J = HEAD(k, j); J!=-1;J=NEXT(J))
+        {
+            for (p = ATp[J]; p < ATp[J+1]; p++)
+            {
+                i = ATi[p];
+                q = cs_leaf(i, j, first, maxfirst, prevleaf, ancestor, &jleaf);
+                if (jleaf >= 1) delta[j]++;
+                if (jleaf == 2) delta[q]--;
+            }
+        }
+        if (parent[j] != -1) ancestor[j] = parent[j];
+    }
+    for (j = 0; j < n; j++){
+        if (parent[j] != -1) colcount[parent[j]] += colcount[j];
+    }
+    return (cs_idone(colcount, AT, w, 1));
 
+}
 
+csn *cs_chol(const cs *A, const css *S)
+{
+    double d, lki, *Lx, *x, *Cx;
+    int top, i, p, k, n, *Li, *Lp, *cp, *pinv, *s, *c, *parent, *Cp, *Ci;
+    cs *L, *C, *E;
+    csn *N;
+    if (!CS_CSC(A) || !S || !S->cp || !S->parent) return (NULL);
+
+    n = A->n;
+    N = (csn *)cs_calloc(1, sizeof(csn));
+    c = (int *)cs_malloc(2*n, sizeof(int));
+    x = (double *)cs_malloc(n, sizeof(double));
+    cp = S->cp; pinv = S->pinv; parent = S->parent;
+    C = pinv? cs_symperm(A, pinv, 1) : ((cs *) A);
+    E = pinv ? C : NULL; /*E is alias of A, or a copy E = A(p, p)*/
+
+    if (!N || !c || !x || !C) return (cs_ndone(N, E, c, x, 0));
+
+    s = c + n; 
+    Cp = C->p; Ci = C->i; Cx = C->x;
+    N->L = L = cs_spalloc(n, n, cp[n], 1, 0);
+    if (!L) return (cs_ndone(N, E ,c, x, 0));
+
+    for (k = 0; k < n; k++) Lp[k] = c[k] = cp[k];
+    for (k = 0; k < n; k++) /*compute L*L' = C   */
+    {
+        /*--------- Nonzero pattern of L(k,:) ---------------------------------*/
+        top = cs_ereach(C, k, parent, s, c);
+        x[k] = 0;
+        for (p = Cp[k]; p < Cp[k+1]; p++)
+        {
+            if (Ci[p] <= k)
+                x[Ci[p]]= Cx[p];
+        }
+        d = x[k];
+        x[k] = 0;
+        /*--------- Triangular solve ---------------------------------*/
+        for (; top < n; top++)
+        {
+            i = s[top];     /*s[top .. n-1] is pattern of L(k, :)*/
+            lki = x[i]/Lx[Lp[i]];
+            x[i] = 0;
+            for (p = Lp[i]+1; p<c[i]; p++){
+                x[Li[p]] -= Lx[p] *lki;
+            }
+            d -= lki*lki;
+            p = c[i]++;
+            Li[p] = k;
+            Lx[p] = lki;
+        }
+        /*--------- Compute L(k, k) ---------------------------------*/
+        if (d <= 0) return (cs_ndone(N, E, c, x ,0));
+        p = c[k]++;
+        Li[p] = k;
+        Lx[p] = sqrt(d);
+    } 
+    Lp[n] = cp[n];
+    return (cs_ndone(N, E, c, x, 1));
 
 }
