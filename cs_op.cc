@@ -548,7 +548,7 @@ int *cs_etree(const cs* A, int ata)
         for (p = Ap[k]; p < Ap[k+1]; p++) /*searching path on the uppper triangle matrix*/
         {
             i = ata ? prev[Ai[p]] : Ai[p];
-            for (; i != -1 && i < k; i=inext) /*traverse up trangle matrix*/
+            for (; i != -1 && i < k; i=inext) /*traverse upper trangle matrix*/
             {
                 inext = ancestor[i];
                 ancestor[i] = k;                /*ancestor become large node, path compression*/
@@ -725,8 +725,9 @@ int *rowcnt(cs *A, int *parent, int *post){
         {
             i = Ai[p];
             /*find leaf node add its level to kth subtree*/
-            q = cs_leaf(i, j, first, maxfirst, preleaf, ancestor, &jleaf);
+            q = cs_leaf(i, j, first, maxfirst, preleaf, ancestor, &jleaf);/*low triangular tree*/
             if (jleaf){
+                /* from small node, make sure leaf of i is start from j, node smaller than j is cut*/
                 rowcount[i] += level[j] - level[q]; /*every j leaf node provides i row count*/
             }
 
@@ -779,7 +780,12 @@ static void init_ata(cs *AT, const int *post, int *w, int **head, int **next){
     }
 }
 int *cs_counts(const cs *A, const int *parent, const int *post, int ata){
-    /*ata is 1 : (A^T)A  is computed; ata is 0: A is computed*/
+    /***************************************************************
+     * 
+     * col count L track of how many times j appears in any row subtree
+     * ata is 1 : (A^T)A  is computed; ata is 0: A is computed
+     * 
+     * *************************************************************/
     int i, j, k, n, m, J, s, p, q, jleaf;
     int *ATp, *ATi, *maxfirst, *prevleaf, *ancestor, *head=NULL, *next=NULL, *colcount, *w, *first, *delta;
     cs *AT;
@@ -789,7 +795,9 @@ int *cs_counts(const cs *A, const int *parent, const int *post, int ata){
     s = 4 * n + (ata ? (n+m+1) : 0);
     delta = colcount = (int *) cs_malloc(n, sizeof(int));
     w = (int *)cs_malloc(s, sizeof(int));
+    /*when we transpose A matrix, we can use row count alogrithm to calculate column count*/
     AT = cs_transpose(A, 0);
+    
     if (!AT || !colcount || !w) return (cs_idone(colcount, AT, w, 0));
 
     ancestor = w; maxfirst = w + n; prevleaf = w + 2 * n; first = w + 3 * n;
@@ -810,11 +818,16 @@ int *cs_counts(const cs *A, const int *parent, const int *post, int ata){
     {
         j = post[k];
         if (parent[j] != -1) delta[parent[j]]--; /*if j is leaf delta[]*/
-        for (J = HEAD(k, j); J!=-1;J=NEXT(J))
-        {
+        for (J = HEAD(k, j); J!=-1; J=NEXT(J))
+        {   
+            /*Head Next for A'A situation, */
             for (p = ATp[J]; p < ATp[J+1]; p++)
             {
                 i = ATi[p];
+                /*******************************************************************
+                 * although it calculate low triangular matrix of AT,
+                 * it actually calculate upper triangular matrix of original matrix A;
+                 *******************************************************************/
                 q = cs_leaf(i, j, first, maxfirst, prevleaf, ancestor, &jleaf);
                 if (jleaf >= 1) delta[j]++;
                 if (jleaf == 2) delta[q]--;
@@ -851,33 +864,33 @@ csn *cs_chol(const cs *A, const css *S)
     Cp = C->p; Ci = C->i; Cx = C->x;
     N->L = L = cs_spalloc(n, n, cp[n], 1, 0);
     if (!L) return (cs_ndone(N, E ,c, x, 0));
-
+    Lp = L->p; Li = L->i; Lx = L->x;
     for (k = 0; k < n; k++) Lp[k] = c[k] = cp[k];
     for (k = 0; k < n; k++) /*compute L*L' = C   */
     {
         /*--------- Nonzero pattern of L(k,:) ---------------------------------*/
-        top = cs_ereach(C, k, parent, s, c);
+        top = cs_ereach(C, k, parent, s, c);        /*find nonzero pattern of L(K, :)*/
         x[k] = 0;
         for (p = Cp[k]; p < Cp[k+1]; p++)
         {
             if (Ci[p] <= k)
-                x[Ci[p]]= Cx[p];
+                x[Ci[p]]= Cx[p];                    /* as Lx=b, x=b, in cholesky L(:k, k) = A(:k, k)*/
         }
-        d = x[k];
+        d = x[k];                                   /* save L(k, k)*/
         x[k] = 0;
         /*--------- Triangular solve ---------------------------------*/
         for (; top < n; top++)
         {
-            i = s[top];     /*s[top .. n-1] is pattern of L(k, :)*/
-            lki = x[i]/Lx[Lp[i]];
+            i = s[top];                             /*s[top .. n-1] is pattern of L(k, :)*/
+            lki = x[i]/Lx[Lp[i]];                   /* as Lx = b , solve x[i] = x[i] / L[i][i] */
             x[i] = 0;
-            for (p = Lp[i]+1; p<c[i]; p++){
+            for (p = Lp[i]+1; p < c[i]; p++){
                 x[Li[p]] -= Lx[p] *lki;
             }
             d -= lki*lki;
             p = c[i]++;
             Li[p] = k;
-            Lx[p] = lki;
+            Lx[p] = lki;                            /*store L(k, i in set(0~k))*/
         }
         /*--------- Compute L(k, k) ---------------------------------*/
         if (d <= 0) return (cs_ndone(N, E, c, x ,0));
