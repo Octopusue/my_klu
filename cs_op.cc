@@ -578,6 +578,8 @@ int *cs_etree(const cs* A, int ata)
 
 int cs_ereach(const cs *A, int k, const int *parent, int *s, int *w)
 {
+    /*traverse kth subtree from leaf to its root*/
+
     int i, p, n, len, top, *Ap, *Ai;
     if (!CS_CSC(A) || ! parent || !s || !w) return -1;
 
@@ -587,7 +589,7 @@ int cs_ereach(const cs *A, int k, const int *parent, int *s, int *w)
     for (p = Ap[k]; p < Ap[k+1]; p++)
     {
         i = Ai[p];
-        if (i>k) continue;
+        if (i>k) continue;                              /*still use upper triangular part of A*/
         for (len=0; !CS_MARKED(w, i); i = parent[i]) /*traverse up etree*/
         {
             s[len] = i;
@@ -606,6 +608,7 @@ int cs_ereach(const cs *A, int k, const int *parent, int *s, int *w)
 
 int *cs_post(const int * parent, int n){
     /************************************************************
+    * It is algrithm post order traverse the tree 
     * eliminate tree ordered by parent ptr，child node point parent node。
     * postordering tree ， it gives node orders; 
     * *********************************************************/
@@ -662,7 +665,9 @@ int cs_tdfs(int j, int k, int *head, const int *next, int *post, int *stack){
 
 void firstdesc(int n, int *parent, int *post, int *first, int *level)
 {
-    /*first[i] = k represents node i rank k*/
+    /*this function disjoint the elinimation tree into pieces
+    * the smallest node of each path, must be leaves for some kth row subree
+    * first descendant means the leaf node */
     int len, i, k, r, s;
     for (i = 0; i < n; i++) first[i] = -1;
 
@@ -687,6 +692,11 @@ void firstdesc(int n, int *parent, int *post, int *first, int *level)
 
 
 int *rowcnt(cs *A, int *parent, int *post){
+    /* row count is the first time traverse A matrix in lower triangular matrix
+    * the kth row count traverse leaf to its k node or least common node of this subtree;
+    * the number of node of the subtree is count for kth row
+    *  
+    */
     int i, j, k, len, s, p, jprev, q, n, sparent, jleaf;
     int  *Ap, *Ai, *maxfirst, *ancestor, *preleaf, *w, *first, *level, *rowcount;
 
@@ -714,6 +724,7 @@ int *rowcnt(cs *A, int *parent, int *post){
         for (p = Ap[j]; p < Ap[j+1]; p++)
         {
             i = Ai[p];
+            /*find leaf node add its level to kth subtree*/
             q = cs_leaf(i, j, first, maxfirst, preleaf, ancestor, &jleaf);
             if (jleaf){
                 rowcount[i] += level[j] - level[q]; /*every j leaf node provides i row count*/
@@ -741,12 +752,16 @@ int cs_leaf(int i, int j, const int *first, int *maxfirst, int *prevleaf, int *a
     *jleaf = (jprev == -1) ? 1 : 2;                     /*j is first leaf of i or j is subsequent leaf of i*/
 
     if (*jleaf ==1) return i;
-    for (q = jprev; q != ancestor[q]; q = ancestor[q]); /*find q root*/
+    /* **********************************************
+    * find q root, it won't traverse to the last root, 
+    * because it has not been defined outside this function
+    * **************************************************/
+    for (q = jprev; q != ancestor[q]; q = ancestor[q]); 
 
     for (s = jprev; s != q; s = sparent)
     {
         sparent = ancestor[s];
-        ancestor[s] = q;
+        ancestor[s] = q;                                /*path compression of path to its root*/
     }
     return q;                                           /* least common ancestor (jprev, j)*/
 }
