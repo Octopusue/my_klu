@@ -68,6 +68,9 @@ int main()
     cs *A = cs_compress(triMatrix);
     cs *AT = cs_transpose(A, 1);
     cs *ATA = cs_multiply(AT, A);
+    // cs_spfree(A);
+    // A = AT;
+
     cout<<A->nzmax<<"  "<<ATA->nzmax<<endl;
     int *post, *parent;
     parent = cs_etree(A, 1);

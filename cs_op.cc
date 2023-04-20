@@ -772,13 +772,13 @@ int cs_leaf(int i, int j, const int *first, int *maxfirst, int *prevleaf, int *a
 
 static void init_ata(cs *AT, const int *post, int *w, int **head, int **next){
     /*the elimination tree of A'A is constructed, it can be recover from post
-    * here is */
+    * if AT is low triangular matrix, post is equal to head */
     int i, k, p, m = AT->n, n = AT->m, *ATp=AT->p, *ATi = AT->i;
     *head = w + 4 * n; *next = w + 5 * n + 1;
     for (k =0; k<n; k++) w[post[k]] = k;
     for (i =0; i<m;i++)
     {
-        for (k = n, p = ATp[i]; p <ATp[i+1]; p++)
+        for (k = n, p = ATp[i]; p < ATp[i+1]; p++)
             k = CS_MIN(k, w[ATi[p]]);
         (*next)[i] = (*head)[k];    //
         (*head)[k] = i;
