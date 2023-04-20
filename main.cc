@@ -61,29 +61,43 @@ cs *get_csMatrix(vector<vector<double>> rawMatrix, size_t dim)
 }
 int main()
 {
-    // size_t dim=4;
-    // vector<vector<double>> rawMatrix;
-    // vector<double> m1 = {4.5, 0, 3.2, 0}, m2={3.1, 2.9, 0, 0.9}, m3={0, 1.7, 3.0, 0}, m4{3.5, 0.4, 0, 1.0};
-    // rawMatrix.push_back(m1);rawMatrix.push_back(m2);rawMatrix.push_back(m3);rawMatrix.push_back(m4);
-
-    // show_matrix(rawMatrix);
-
-    // cs *csMatrix1 = get_csMatrix(rawMatrix, dim);
-    // cs *csMatrix2 = get_csMatrix(rawMatrix, dim);
+    
     FILE *fp;
-    fp = fopen("demo2", "r");
+    fp = fopen("demo3", "r");
     cs *triMatrix = cs_load(fp);
-    cs *csMatrix1 = cs_compress(triMatrix);
-    //csMatrix2 = cs_transpose(csMatrix2, 1);
-
-    // show_cs_details(csMatrix1);
-    // show_cs_details(csMatrix2);
-
-    cs_print(csMatrix1, 1);
+    cs *A = cs_compress(triMatrix);
+    cs *AT = cs_transpose(A, 1);
+    cs *ATA = cs_multiply(AT, A);
+    cout<<A->nzmax<<"  "<<ATA->nzmax<<endl;
     int *post, *parent;
-    parent = cs_etree(csMatrix1, 1);
-    post = cs_post(parent, csMatrix1->n);
-    cs_counts(csMatrix1, parent, post, 1);
+    parent = cs_etree(A, 1);
+    post = cs_post(parent, A->n);
+    // int n = A->n;
+    // for (int it=0;it<n;it++)
+    //     cout<<it<<'\t';
+    // cout<<endl;
+    // for (int it=0;it<n;it++)
+    //     cout<<parent[it]<<'\t';
+    // cout<<endl;
+
+    // cs_free(parent);
+    // cs_free(post);
+    // parent = cs_etree(ATA, 0);
+    // post = cs_post(parent, ATA->n);
+    
+    // for (int it=0;it<n;it++)
+    //     cout<<it<<'\t';
+    // cout<<endl;
+    // for (int it=0;it<n;it++)
+    //     cout<<parent[it]<<'\t';
+    // cout<<endl;
+
+
+    // for (int it=0;it<n;it++)
+    //     cout<<post[it]<<'\t';
+    // cout<<endl;
+    
+    cs_counts(A, parent, post, 1);
     // /*add duplicates entries*/
     // cs_entry(triMatrix, 2, 2, 0.05);
     // show_cs_details(triMatrix);

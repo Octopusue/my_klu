@@ -745,9 +745,10 @@ int cs_leaf(int i, int j, const int *first, int *maxfirst, int *prevleaf, int *a
     int q, s, sparent, jprev;
 
     if (!first || !maxfirst || !prevleaf || !ancestor || !jleaf) return -1;
-    jleaf = 0;
+    *jleaf = 0;
     if (i <= j || first[j] <= maxfirst[i]) return -1;   /* j is not leaf of i */
     /*j is a leaf of i subtree*/
+    printf("%d is leaf of %d \n", j, i);
     maxfirst[i] = j;
     jprev = prevleaf[i];                                /*previous leaf of i subtree*/
     prevleaf[i] = j;
@@ -779,9 +780,17 @@ static void init_ata(cs *AT, const int *post, int *w, int **head, int **next){
     {
         for (k = n, p = ATp[i]; p <ATp[i+1]; p++)
             k = CS_MIN(k, w[ATi[p]]);
-        (*next)[i] = (*head)[k];
+        (*next)[i] = (*head)[k];    //
         (*head)[k] = i;
+
+        for (int it=0;it<n;it++)
+            cout<<(*next)[it]<<'\t';
+        cout<<endl;
+        for (int it=0;it<n;it++)
+            cout<<(*head)[it]<<'\t';
+        cout<<endl<<endl;
     }
+    /*head [i] == j : max column j having columns i*/
 }
 int *cs_counts(const cs *A, const int *parent, const int *post, int ata){
     /***************************************************************
@@ -829,24 +838,38 @@ int *cs_counts(const cs *A, const int *parent, const int *post, int ata){
     for (int it=0;it<n;it++)
         cout<<next[it]<<'\t';
     cout<<endl;
-    for (i = 0; i < n; i++) ancestor[i] = j;
+    cs_print(AT, 0);
+    for (i = 0; i < n; i++) ancestor[i] = i;
     for (k = 0; k < n; k++) 
     {
         j = post[k];
         if (parent[j] != -1) delta[parent[j]]--; /*if j is leaf delta[]*/
-        for (J = HEAD(k, j); J!=-1; J=NEXT(J))
+        for (J = HEAD(k, j); J!=-1; J=NEXT(J))/*Head jump from large node to small node !!!*/
         {   
             /*Head Next for A'A situation, */
+            /**************************************************************
+             * HEAD(k, j) has same function of post[k] -> tell us column order to tranverse; 
+             * Head jump from large node to small node !!!
+             * The outcome of Head + Next  == The outcome of post !!! 
+             * when you print head and next you will find out !!!
+             * At the beginning of Head point to large node which has nonzero in uppper triangular!!!
+             * the Next point to the small node which has nonzero in low triangular !!!
+             * only in this way we consider every possiable node in matrix!!!!!!
+             * **********************************************************/
             for (p = ATp[J]; p < ATp[J+1]; p++)
             {
+                
                 i = ATi[p];
+                printf("k = %d, j = %d, J = %d, p = %d, i = %d, ATp[J]= %d\n", k, j, J, p, i, ATp[J+1]);
                 /*******************************************************************
                  * although it calculate low triangular matrix of AT,
                  * it actually calculate upper triangular matrix of original matrix A;
                  *******************************************************************/
                 q = cs_leaf(i, j, first, maxfirst, prevleaf, ancestor, &jleaf);
-                if (jleaf >= 1) delta[j]++;         /*j become some leaf node*/
-                if (jleaf == 2) delta[q]--;         /*q become a least common node*/
+                if (jleaf >= 1)
+                    delta[j]++;         /*j become some leaf node*/
+                if (jleaf == 2) 
+                    delta[q]--;         /*q become a least common node*/
             }
         }
         if (parent[j] != -1) ancestor[j] = parent[j];
@@ -854,6 +877,9 @@ int *cs_counts(const cs *A, const int *parent, const int *post, int ata){
     for (j = 0; j < n; j++){
         if (parent[j] != -1) colcount[parent[j]] += colcount[j];
     }
+    for (int it=0;it<n;it++)
+        cout<<colcount[it]<<'\t';
+    cout<<endl;
     return (cs_idone(colcount, AT, w, 1));
 
 }
