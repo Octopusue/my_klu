@@ -9,9 +9,9 @@ using namespace std;
 #define CS_TRIPLET(A) (A&&(A->nz>=0))
 #define CS_MAX(x, y) (x > y ? x : y)
 #define CS_MIN(x, y) (x < y ? x : y)
-#define CS_VER 0
-#define CS_SUBVER 0
-#define CS_SUBSUB 0
+#define CS_VER 2
+#define CS_SUBVER 9
+#define CS_SUBSUB 1
 #define CS_DATE "20230414"
 #define CS_COPYRIGHT "liqun.su"
 

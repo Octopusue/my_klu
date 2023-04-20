@@ -326,22 +326,20 @@ int cs_dropzeros(cs *A)
     return (cs_fkeep(A, &cs_nonzero, NULL));
 }
 
+
 cs *cs_load(FILE *f)
 {
     int i, j;
     double x;
     cs *T;
-    if (!f) return NULL;
-    
+    if (!f) NULL;
     T = cs_spalloc(0, 0, 1, 1, 1);
-    while(fscanf(f, "%d%d%lg\n", &i, &j, &x) == 3)
+    while (fscanf(f, "%d%d%lg\n", &i, &j, &x)==3)
     {
         if (!cs_entry(T, i, j, x)) return cs_spfree(T);
     }
     return T;
-
 }
-
 int cs_print(const cs *A, int brief)
 {
     int p, j, m , n, nzmax, nz, *Ap, *Ai;
@@ -369,7 +367,7 @@ int cs_print(const cs *A, int brief)
             for (p = Ap[j]; p<Ap[j+1];p++)
             {
                 printf("    %d : %g\n", Ai[p], Ax ? Ax[p] : 1);
-                if (brief &&p>20)
+                if (brief && p > 20)
                 {
                     printf("    ...\n");
                     return 1;

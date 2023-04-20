@@ -2,6 +2,9 @@
 #include"cs.h"
 #include"cs_op.h"
 #include<vector>
+#include<stdlib.h>
+#include<limits.h>
+#include<stdio.h>
 using namespace std;
 void show_matrix(vector<vector<double>> m)
 {
@@ -58,20 +61,23 @@ cs *get_csMatrix(vector<vector<double>> rawMatrix, size_t dim)
 }
 int main()
 {
-    size_t dim=4;
-    vector<vector<double>> rawMatrix;
-    vector<double> m1 = {4.5, 0, 3.2, 0}, m2={3.1, 2.9, 0, 0.9}, m3={0, 1.7, 3.0, 0}, m4{3.5, 0.4, 0, 1.0};
-    rawMatrix.push_back(m1);rawMatrix.push_back(m2);rawMatrix.push_back(m3);rawMatrix.push_back(m4);
+    // size_t dim=4;
+    // vector<vector<double>> rawMatrix;
+    // vector<double> m1 = {4.5, 0, 3.2, 0}, m2={3.1, 2.9, 0, 0.9}, m3={0, 1.7, 3.0, 0}, m4{3.5, 0.4, 0, 1.0};
+    // rawMatrix.push_back(m1);rawMatrix.push_back(m2);rawMatrix.push_back(m3);rawMatrix.push_back(m4);
 
-    show_matrix(rawMatrix);
+    // show_matrix(rawMatrix);
 
-    cs *csMatrix1 = get_csMatrix(rawMatrix, dim);
-    cs *csMatrix2 = get_csMatrix(rawMatrix, dim);
+    // cs *csMatrix1 = get_csMatrix(rawMatrix, dim);
+    // cs *csMatrix2 = get_csMatrix(rawMatrix, dim);
+    FILE *fp;
+    fp = fopen("demo2", "r");
+    cs *triMatrix = cs_load(fp);
+    cs *csMatrix1 = cs_compress(triMatrix);
+    //csMatrix2 = cs_transpose(csMatrix2, 1);
 
-    csMatrix2 = cs_transpose(csMatrix2, 1);
-
-    show_cs_details(csMatrix1);
-    show_cs_details(csMatrix2);
+    // show_cs_details(csMatrix1);
+    // show_cs_details(csMatrix2);
 
     cs_print(csMatrix1, 1);
     int *post, *parent;

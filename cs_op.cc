@@ -646,7 +646,7 @@ int *cs_post(const int * parent, int n){
 int cs_tdfs(int j, int k, int *head, const int *next, int *post, int *stack){
     int i, p, top = 0;
     if (!head || !next || !post || !stack) return -1;
-
+    stack[0] = j;
     while (top >= 0)
     {
         p = stack[top];
@@ -815,9 +815,20 @@ int *cs_counts(const cs *A, const int *parent, const int *post, int ata){
     }
 
     ATp = AT->p; ATi = AT ->i;
-    
+    cout<<endl;
     if (ata) init_ata(AT, post, w, &head, &next);
-
+    for (int it=0;it<n;it++)
+        cout<<post[it]<<'\t';
+    cout<<endl;
+    for (int it=0;it<n;it++)
+        cout<<parent[it]<<'\t';
+    cout<<endl;
+    for (int it=0;it<n;it++)
+        cout<<head[it]<<'\t';
+    cout<<endl;
+    for (int it=0;it<n;it++)
+        cout<<next[it]<<'\t';
+    cout<<endl;
     for (i = 0; i < n; i++) ancestor[i] = j;
     for (k = 0; k < n; k++) 
     {
@@ -834,8 +845,8 @@ int *cs_counts(const cs *A, const int *parent, const int *post, int ata){
                  * it actually calculate upper triangular matrix of original matrix A;
                  *******************************************************************/
                 q = cs_leaf(i, j, first, maxfirst, prevleaf, ancestor, &jleaf);
-                if (jleaf >= 1) delta[j]++;
-                if (jleaf == 2) delta[q]--;
+                if (jleaf >= 1) delta[j]++;         /*j become some leaf node*/
+                if (jleaf == 2) delta[q]--;         /*q become a least common node*/
             }
         }
         if (parent[j] != -1) ancestor[j] = parent[j];
