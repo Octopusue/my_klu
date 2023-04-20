@@ -63,7 +63,7 @@ int main()
 {
     
     FILE *fp;
-    fp = fopen("demo3", "r");
+    fp = fopen("qr_tri", "r");
     cs *triMatrix = cs_load(fp);
     cs *A = cs_compress(triMatrix);
     cs *AT = cs_transpose(A, 1);

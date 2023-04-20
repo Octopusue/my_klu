@@ -855,6 +855,7 @@ int *cs_counts(const cs *A, const int *parent, const int *post, int ata){
              * At the beginning of Head point to large node which has nonzero in uppper triangular!!!
              * the Next point to the small node which has nonzero in low triangular !!!
              * only in this way we consider every possiable node in matrix!!!!!!
+             * as done in etree where ata == 1, it traverse every nonzero node
              * **********************************************************/
             for (p = ATp[J]; p < ATp[J+1]; p++)
             {
@@ -880,7 +881,7 @@ int *cs_counts(const cs *A, const int *parent, const int *post, int ata){
     for (int it=0;it<n;it++)
         cout<<colcount[it]<<'\t';
     cout<<endl;
-    return (cs_idone(colcount, AT, w, 1));
+    return (cs_idone(colcount, AT, w, 1));/*return L R^T*/
 
 }
 
