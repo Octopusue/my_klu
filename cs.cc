@@ -406,7 +406,8 @@ css *cs_schol(int order, const cs *A){
     S = (css *)cs_calloc(1, sizeof(css));
 
     if (!S) return NULL;
-    P = cs_amd(order, A);   /*find a permutation P so that PAP^T has fewer nonzero in its factorization than A*/
+    //P = cs_amd(order, A);   /*find a permutation P so that PAP^T has fewer nonzero in its factorization than A*/
+    P = NULL;//todo
     S->pinv = cs_pinv(P, n);
     cs_free(P);
     if (order && !S->pinv) return (cs_sfree(S));

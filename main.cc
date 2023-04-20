@@ -74,7 +74,10 @@ int main()
     show_cs_details(csMatrix2);
 
     cs_print(csMatrix1, 1);
-
+    int *post, *parent;
+    parent = cs_etree(csMatrix1, 1);
+    post = cs_post(parent, csMatrix1->n);
+    cs_counts(csMatrix1, parent, post, 1);
     // /*add duplicates entries*/
     // cs_entry(triMatrix, 2, 2, 0.05);
     // show_cs_details(triMatrix);
