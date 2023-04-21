@@ -1125,7 +1125,11 @@ static int cs_vcount(const cs *A, css *S)
     cout<<endl;
         
     }
-    /*pinv[i] == k represents i row of A makes k row of V nonzero????*/
+    /*************************************************************
+    * pinv[i] == k represents i row of A makes k row of V nonzero!!!!!!!!!!
+    * pinv is core! nonzero node i of A after k iteration become nonzero node pinv[i], 
+    * therefore V pattern is determined by pinv[i], where i is non-zero pattern of A;
+    * *************************************************************/
     for (i = 0; i < m; i++)
         if (pinv[i] < 0)
             pinv[i] = k++;
@@ -1230,7 +1234,7 @@ csn *cs_qr(const cs*A, const css *S){
             i = pinv[Ai[p]];                    /*Is is how we determine V pattern : change row into trapezium*/
             x[i] = Ax[p];                       /*x[i] = A[i][col]*/
             cout<<"Ai[p] = "<<Ai[p]<<" i = "<<i<<"  Ax[p] = "<<Ax[p]<<endl;
-            if (i > k && w[i] <k)               /*pattern of V(:, k) = x(k+1:m)*/
+            if (i > k && w[i] <k)               /*pattern of V(:, k) = x(k+1:m), upper triangular of A does not contribute to V*/
             {
                 Vi[vnz++] = i;                  /* V pattern == leftmost A pattern */
                 w[i] = k;
@@ -1253,12 +1257,13 @@ csn *cs_qr(const cs*A, const css *S){
         //cs_print(R, 0);
         for (p = p1; p < vnz; p++)
         {
-            Vx[p] = x[Vi[p]];
+            Vx[p] = x[Vi[p]];                   /*V now represent A^{k-1}_{*,k}*/
             cout<<"Vi[p] = "<<Vi[p]<<"  Vx[p] "<<Vx[p]<<endl;
             x[Vi[p]] = 0;
         }
         Ri[rnz] = k;
-        Rx[rnz++] = cs_house(Vx+p1, Beta+k, vnz-p1);
+        Rx[rnz++] = cs_house(Vx+p1, Beta+k, vnz-p1);/* V now become actual V */
+        cout<<vnz-p1<<endl;
         //cs_print(V, 0);
 
     }
