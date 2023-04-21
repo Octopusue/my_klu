@@ -61,6 +61,8 @@ cs *get_csMatrix(vector<vector<double>> rawMatrix, size_t dim)
 }
 int main()
 {
+   
+   
     
     FILE *fp;
     fp = fopen("qr_tri", "r");
@@ -68,6 +70,10 @@ int main()
     cs *A = cs_compress(triMatrix);
     cs *AT = cs_transpose(A, 1);
     cs *ATA = cs_multiply(AT, A);
+
+    css *S = cs_sqr(0, A, 1);
+    csn *SN = cs_qr(A, S);
+
     // cs_spfree(A);
     // A = AT;
 
@@ -101,12 +107,7 @@ int main()
     // cout<<endl;
     
     cs_counts(A, parent, post, 1);
-    // /*add duplicates entries*/
-    // cs_entry(triMatrix, 2, 2, 0.05);
-    // show_cs_details(triMatrix);
-    // cs_spfree(csMatrix);
-    // csMatrix = cs_compress(triMatrix);
-    // show_cs_details(csMatrix);
+    
 
     return 0;
 }
