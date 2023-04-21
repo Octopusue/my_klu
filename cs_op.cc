@@ -1057,7 +1057,7 @@ static int cs_vcount(const cs *A, css *S)
     {   
         i = head[k];                        /*remove row i from queue k*/
         S->lnz++;                           /* count V(k, k) as non-zero*/
-        if (i < 0) i = S->m2++;             /*add a fictitious row*/
+        if (i < 0) i = S->m2++;             /* add a fictitious row*/
         pinv[i] = k;                        /* associate row i with V(:, k) ???*/
         if (--nque[k] <= 0) continue;       /*skip if V(k+1:m, k)*/
         S->lnz += nque[k];                  /**/
@@ -1133,7 +1133,7 @@ csn *cs_qr(const cs*A, const css *S){
     s = w + m2;
     for (k = 0; k < m2; k++)
         x[k] = 0;
-    N->L = V = cs_spalloc(m2, n, vnz, 1, 0);
+    N->L = V = cs_spalloc(m2, n, vnz, 1, 0);        /*V is triangular matrix, */
     N->U = R = cs_spalloc(m2, n, rnz, 1, 0);
     N->B = Beta = (double *)cs_malloc(n, sizeof(double));
     if (!R || !V || !Beta) return (cs_ndone(N, NULL, w, x, 0));
@@ -1143,57 +1143,65 @@ csn *cs_qr(const cs*A, const css *S){
 
     for (i = 0; i <m2; i++) w[i] = -1;
     rnz = 0; vnz = 0;
+    cout<<"pinv"<<endl;
+    for (int it=0;it<n;it++)
+        cout<<pinv[it]<<'\t';
+    cout<<endl;
     for (k = 0; k < n; k++)                     /*tranverse column*/
     {
         /* calculate every column*/
         Rp[k] = rnz;
         Vp[k] = p1 = vnz;
         w[k] = k;
-        Vi[vnz++] = k;
+        Vi[vnz++] = k;                          /*digal entries*/
         top = n;
         col = q ? q[k] : k;                     /*column permutation*/
         for (p = Ap[col]; p < Ap[col+1]; p++)   /*traverse row*/
         {
+            /******************************/
             i = leftmost[Ai[p]];                /*find min col*/
+            cout<<"Ai[p] = "<<Ai[p]<<"  i = "<<i<<endl;
             for (len = 0; w[i] != k; i = parent[i])
             {
                 s[len++] = i;
-                w[i] = k;
+                w[i] = k;                       /*save max subtree, and mark i node*/
             }
             
             while (len > 0)
                 s[--top] = s[--len];            /*push path into stack*/
-            i = pinv[Ai[p]];
+            /******************************/
+            i = pinv[Ai[p]];                    /*Is is how we determine V pattern : change row into trapezium*/
             x[i] = Ax[p];                       /*x[i] = A[i][col]*/
             if (i > k && w[i] <k)               /*pattern of V(:, k) = x(k+1:m)*/
             {
-                Vi[vnz++] = i;
+                Vi[vnz++] = i;                  /* V pattern == leftmost A pattern */
                 w[i] = k;
             }
         }
-        for (p = top; p < n; p++)
+        printf("vnz = %d", vnz);
+        for (p = top; p < n; p++)               /*k subtree traverse, 0th subtree skip*/
         {
             i = s[p];                           /*R(i, k) is nonzero*/
-            cs_happly(V, i, Beta[i], x);
-            Ri[rnz] = i;
+            cs_happly(V, i, Beta[i], x);        /*this make x multiply over and over eq~(5.1)!!!!!!*/
+            Ri[rnz] = i;                        /*R nonzero pattern determined by Reach(min col) Tree */
             Rx[rnz++] = x[i];
             
-            printf("%d, %g", i, Rx[rnz-1]);
+            //printf("%d, %g", i, Rx[rnz-1]);
 
             x[i] = 0;
             if (parent[i] == k)
                 vnz = cs_scatter(V, i, 0, w, NULL, k, V, vnz);
         }
-        cs_print(R, 0);
+        //cs_print(R, 0);
         for (p = p1; p < vnz; p++)
         {
             Vx[p] = x[Vi[p]];
-            printf("%d", Vi[p]);
+            cout<<"Vi[p] = "<<Vi[p]<<"  Vx[p] "<<Vx[p]<<endl;
             x[Vi[p]] = 0;
         }
         Ri[rnz] = k;
         Rx[rnz++] = cs_house(Vx+p1, Beta+k, vnz-p1);
-        cs_print(V, 0);
+        //cs_print(V, 0);
 
     }
 
