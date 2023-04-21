@@ -9,6 +9,7 @@ extern "C"{
 * *************************/
 double cs_norm(const cs *A);
 
+cs *cs_sort(const cs *A);
 cs *cs_transpose(const cs *A, int values);
 
 double cs_house(double *x, double *beta, int n);

@@ -70,7 +70,7 @@ int main()
     cs *A = cs_compress(triMatrix);
     cs *AT = cs_transpose(A, 1);
     cs *ATA = cs_multiply(AT, A);
-
+    A = cs_sort(A);
     css *S = cs_sqr(0, A, 1);
     csn *SN = cs_qr(A, S);
 

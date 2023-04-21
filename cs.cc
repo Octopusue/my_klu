@@ -187,7 +187,8 @@ double cs_cumsum(int *p, int *c, int n)
     return nz2;
 }
 cs *cs_compress(const cs *T)
-{
+{   
+    /*fix order todo*/
     int m, n, nz, p, k, *Cp, *Ci, *w, *Ti, *Tj;
     double *Cx, *Tx;
     cs *C;
@@ -223,8 +224,8 @@ cs *cs_compress(const cs *T)
     /*the CSC matrix may have same entries and they are required to be summed*/
     for (k=0; k<nz; k++)
     {
-        p = w[Tj[k]]++;
-        Ci[p] = Ti[k]; /* triplet entries are not in order*/
+        //cout<<k<<"  "<<Ti[k]<<"  "<<Tj[k]<<"  "<<w[Tj[k]]<<endl;
+        Ci[p = w[Tj[k]]++] = Ti[k]; /* triplet entries are not in order*/
         if (Cx) Cx[p] = Tx[k];
     }
     return (cs_done(C, w, NULL, 1));

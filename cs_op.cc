@@ -10,6 +10,11 @@ int *cs_amd(int order, const cs *A){
         p[i] = i;
     return p;
 }
+cs *cs_sort(const cs *A)
+{
+    cs *AT = cs_transpose(A, 1);
+    return cs_transpose(AT, 1);
+}
 cs *cs_transpose(const cs *A, int values)
 {
     int p, q, j, *Cp, *Ci, n, m, *Ap, *Ai, *w;
@@ -1024,7 +1029,7 @@ static int cs_vcount(const cs *A, css *S)
         return (0);
     }
 
-    next = w; head = w + n; tail = w + m + n; nque = w + +2 * n;
+    next = w; head = w + m; tail = w + m + n; nque = w + m + 2 * n;
 
     for (k = 0; k < n; k++)
     {
@@ -1041,18 +1046,44 @@ static int cs_vcount(const cs *A, css *S)
             leftmost[Ai[p]] = k;            /*smallest kth non-zero node of each row*/
         }
     }
+    /*split min col into clique*/
     for (i = m-1; i >= 0; i--)              /*scan rows in reverse order*/
     {
         pinv[i] = -1;
         k = leftmost[i];
         if (k == -1) continue;
-        if (nque[k]++ == 0) tail[k] = i;    /* first row in queue k, also clique of each leftmost[k]*/
+        if (nque[k]++ == 0) 
+            tail[k] = i;    /* first row in queue k, also clique of each leftmost[k]*/
         next[i] = head[k];                  /*just like col count link rows at certain order*/
         head[k] = i;                        /*head is row order to traverse*/
     }
+    
     S->lnz = 0;
     S->m2 = m;
-
+    cout<<"it"<<endl;
+    for (int it=0;it<n;it++)
+        cout<<it<<'\t';
+    cout<<endl;
+    cout<<"leftmost"<<endl;
+    for (int it=0;it<n;it++)
+        cout<<leftmost[it]<<'\t';
+    cout<<endl;
+    cout<<"head"<<endl;
+    for (int it=0;it<n;it++)
+        cout<<head[it]<<'\t';
+    cout<<endl;
+    cout<<"next"<<endl;
+    for (int it=0;it<n;it++)
+        cout<<next[it]<<'\t';
+    cout<<endl;
+    cout<<"nque"<<endl;
+    for (int it=0;it<n;it++)
+        cout<<nque[it]<<'\t';
+    cout<<endl;
+    cout<<"tail"<<endl;
+    for (int it=0;it<n;it++)
+        cout<<tail[it]<<'\t';
+    cout<<endl;
     for (k = 0; k < n; k++)                 /*find row permutation and nnz(V)*/
     {   
         i = head[k];                        /*remove row i from queue k*/
@@ -1061,18 +1092,44 @@ static int cs_vcount(const cs *A, css *S)
         pinv[i] = k;                        /* associate row i with V(:, k) ???*/
         if (--nque[k] <= 0) continue;       /*skip if V(k+1:m, k)*/
         S->lnz += nque[k];                  /**/
-        if ((pa = parent[k]) != -1)
+        if ((pa = parent[k]) != -1)         /*eq~(5.3): k node contributes father node of k */
         {
             if (nque[pa] == 0) tail[pa] = tail[k];             
             next[tail[k]] = head[pa];
             head[pa] = next[i];
             nque[pa] += nque[k];
         }
+        cout<<"it"<<endl;
+    for (int it=0;it<n;it++)
+        cout<<it<<'\t';
+    cout<<endl;
+    cout<<"leftmost"<<endl;
+    for (int it=0;it<n;it++)
+        cout<<leftmost[it]<<'\t';
+    cout<<endl;
+    cout<<"head"<<endl;
+    for (int it=0;it<n;it++)
+        cout<<head[it]<<'\t';
+    cout<<endl;
+    cout<<"next"<<endl;
+    for (int it=0;it<n;it++)
+        cout<<next[it]<<'\t';
+    cout<<endl;
+    cout<<"nque"<<endl;
+    for (int it=0;it<n;it++)
+        cout<<nque[it]<<'\t';
+    cout<<endl;
+    cout<<"tail"<<endl;
+    for (int it=0;it<n;it++)
+        cout<<tail[it]<<'\t';
+    cout<<endl;
         
     }
+    /*pinv[i] == k represents i row of A makes k row of V nonzero????*/
     for (i = 0; i < m; i++)
         if (pinv[i] < 0)
             pinv[i] = k++;
+    
     cs_free(w);
     return 1;
 }
@@ -1160,7 +1217,7 @@ csn *cs_qr(const cs*A, const css *S){
         {
             /******************************/
             i = leftmost[Ai[p]];                /*find min col*/
-            cout<<"Ai[p] = "<<Ai[p]<<"  i = "<<i<<endl;
+            //cout<<"Ai[p] = "<<Ai[p]<<"  i = "<<i<<endl;
             for (len = 0; w[i] != k; i = parent[i])
             {
                 s[len++] = i;
@@ -1172,13 +1229,14 @@ csn *cs_qr(const cs*A, const css *S){
             /******************************/
             i = pinv[Ai[p]];                    /*Is is how we determine V pattern : change row into trapezium*/
             x[i] = Ax[p];                       /*x[i] = A[i][col]*/
+            cout<<"Ai[p] = "<<Ai[p]<<" i = "<<i<<"  Ax[p] = "<<Ax[p]<<endl;
             if (i > k && w[i] <k)               /*pattern of V(:, k) = x(k+1:m)*/
             {
                 Vi[vnz++] = i;                  /* V pattern == leftmost A pattern */
                 w[i] = k;
             }
         }
-        printf("vnz = %d", vnz);
+        printf("vnz = %d\n", vnz);
         for (p = top; p < n; p++)               /*k subtree traverse, 0th subtree skip*/
         {
             i = s[p];                           /*R(i, k) is nonzero*/
