@@ -250,6 +250,7 @@ cs *cs_permute(const cs* A, const int *pinv, const int *q, int values)
 
     if (!C) return (cs_done(C, NULL, NULL, 0));
     /*generate new csc matrix: Cp->Cx->Ci*/
+    Cp = C->p; Ci = C->i; Cx = C->x;
     for (k = 0; k < n; k++)
     {
         Cp[k] = nz;                             /* column k of C is column q[k] of A */
@@ -257,8 +258,8 @@ cs *cs_permute(const cs* A, const int *pinv, const int *q, int values)
         for (t = Ap[j]; t < Ap[j+1]; t++)
         {
             if (Cx) Cx[nz] = Ax[t];             /* row i of A if row pinv[i] of C */
-            Ci[nz] = pinv ? pinv[Ai[t]] : Ai[t]; /* row Ai[t] permute to row pinv[Ai[t]]*/
-            nz++;
+            Ci[nz++] = pinv ? pinv[Ai[t]] : Ai[t]; /* row Ai[t] permute to row pinv[Ai[t]]*/
+            
         }
 
     }
@@ -966,7 +967,7 @@ double cs_house(double *x, double *beta, int n){
     It computes beta and s and overwrites x with v*/
     double s, sigma = 0;
     int i;
-    if (! x || !beta) return -1;
+    if (!x || !beta) return -1;
 
     for (i = 1; i < n; i++)/*only calculate entries except first one*/
         sigma += x[i]*x[i];
@@ -1051,6 +1052,7 @@ static int cs_vcount(const cs *A, css *S)
     {
         pinv[i] = -1;
         k = leftmost[i];
+
         if (k == -1) continue;
         if (nque[k]++ == 0) 
             tail[k] = i;    /* first row in queue k, also clique of each leftmost[k]*/
@@ -1086,6 +1088,7 @@ static int cs_vcount(const cs *A, css *S)
     cout<<endl;
     for (k = 0; k < n; k++)                 /*find row permutation and nnz(V)*/
     {   
+        cout<<endl<<"iteration: "<<k<<endl;
         i = head[k];                        /*remove row i from queue k*/
         S->lnz++;                           /* count V(k, k) as non-zero*/
         if (i < 0) i = S->m2++;             /* add a fictitious row*/
@@ -1100,40 +1103,44 @@ static int cs_vcount(const cs *A, css *S)
             nque[pa] += nque[k];
         }
         cout<<"it"<<endl;
-    for (int it=0;it<n;it++)
-        cout<<it<<'\t';
-    cout<<endl;
-    cout<<"leftmost"<<endl;
-    for (int it=0;it<n;it++)
-        cout<<leftmost[it]<<'\t';
-    cout<<endl;
-    cout<<"head"<<endl;
-    for (int it=0;it<n;it++)
-        cout<<head[it]<<'\t';
-    cout<<endl;
-    cout<<"next"<<endl;
-    for (int it=0;it<n;it++)
-        cout<<next[it]<<'\t';
-    cout<<endl;
-    cout<<"nque"<<endl;
-    for (int it=0;it<n;it++)
-        cout<<nque[it]<<'\t';
-    cout<<endl;
-    cout<<"tail"<<endl;
-    for (int it=0;it<n;it++)
-        cout<<tail[it]<<'\t';
-    cout<<endl;
+        for (int it=0;it<n;it++)
+            cout<<it<<'\t';
+        cout<<endl;
+        cout<<"leftmost"<<endl;
+        for (int it=0;it<n;it++)
+            cout<<leftmost[it]<<'\t';
+        cout<<endl;
+        cout<<"head"<<endl;
+        for (int it=0;it<n;it++)
+            cout<<head[it]<<'\t';
+        cout<<endl;
+        cout<<"next"<<endl;
+        for (int it=0;it<n;it++)
+            cout<<next[it]<<'\t';
+        cout<<endl;
+        cout<<"nque"<<endl;
+        for (int it=0;it<n;it++)
+            cout<<nque[it]<<'\t';
+        cout<<endl;
+        cout<<"tail"<<endl;
+        for (int it=0;it<n;it++)
+            cout<<tail[it]<<'\t';
+        cout<<endl;
         
     }
     /*************************************************************
     * pinv[i] == k represents i row of A makes k row of V nonzero!!!!!!!!!!
     * pinv is core! nonzero node i of A after k iteration become nonzero node pinv[i], 
     * therefore V pattern is determined by pinv[i], where i is non-zero pattern of A;
+    * the pinv makes PA matrix has non-zero at dignal entries
+    * The row permutation pinv are ment to make matrix strong hall
     * *************************************************************/
     for (i = 0; i < m; i++)
         if (pinv[i] < 0)
             pinv[i] = k++;
     
+    // cs *permA = cs_permute(A, pinv, NULL, 1);
+    // cs *tanspermA = cs_transpose(permA, 0);
     cs_free(w);
     return 1;
 }
@@ -1147,6 +1154,7 @@ css *cs_sqr(int order, const cs* A, int qr){
 
     if (!S) return NULL;
     S->q = cs_amd(order, A);
+    
     if (order && !S->q) return (cs_sfree(S));
 
     if (qr)
@@ -1203,6 +1211,7 @@ csn *cs_qr(const cs*A, const css *S){
     Vp = V->p; Vi = V->i; Vx = V->x;
 
     for (i = 0; i <m2; i++) w[i] = -1;
+
     rnz = 0; vnz = 0;
     cout<<"pinv"<<endl;
     for (int it=0;it<n;it++)
@@ -1233,7 +1242,7 @@ csn *cs_qr(const cs*A, const css *S){
             /******************************/
             i = pinv[Ai[p]];                    /*Is is how we determine V pattern : change row into trapezium*/
             x[i] = Ax[p];                       /*x[i] = A[i][col]*/
-            cout<<"Ai[p] = "<<Ai[p]<<" i = "<<i<<"  Ax[p] = "<<Ax[p]<<endl;
+            cout<<"COL: "<<col<<"Ai[p] = "<<Ai[p]<<" i = "<<i<<"  Ax[p] = "<<Ax[p]<<endl;
             if (i > k && w[i] <k)               /*pattern of V(:, k) = x(k+1:m), upper triangular of A does not contribute to V*/
             {
                 Vi[vnz++] = i;                  /* V pattern == leftmost A pattern */
