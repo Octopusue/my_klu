@@ -1088,6 +1088,9 @@ static int cs_vcount(const cs *A, css *S)
     cout<<endl;
     for (k = 0; k < n; k++)                 /*find row permutation and nnz(V)*/
     {   
+        /* A～V 父结点是子节点的集合，如果把矩阵变成梯形矩阵，
+        * 那么就不再需要把子结点的集合加到父节点上，
+        * 也就是说，只要行交换变成梯形矩阵以后，non-zero A 就是non-zero V*/
         cout<<endl<<"iteration: "<<k<<endl;
         i = head[k];                        /*remove row i from queue k*/
         S->lnz++;                           /* count V(k, k) as non-zero*/
@@ -1095,12 +1098,18 @@ static int cs_vcount(const cs *A, css *S)
         pinv[i] = k;                        /* associate row i with V(:, k) ???*/
         if (--nque[k] <= 0) continue;       /*skip if V(k+1:m, k)*/
         S->lnz += nque[k];                  /**/
+        
         if ((pa = parent[k]) != -1)         /*eq~(5.3): k node contributes father node of k */
         {
-            if (nque[pa] == 0) tail[pa] = tail[k];             
+            cout<<pa<<"=parent["<<k<<"]"<<endl; 
+            if (nque[pa] == 0) tail[pa] = tail[k];    
+            cout<<"tail["<<pa<<"] = tail["<<k<<"]"<<endl;         
             next[tail[k]] = head[pa];
+            cout<<"next["<<tail[k]<<"] = head["<<pa<<"]"<<endl; 
             head[pa] = next[i];
+            cout<<"head["<<pa<<"] = next["<<i<<"]"<<endl; 
             nque[pa] += nque[k];
+            
         }
         cout<<"it"<<endl;
         for (int it=0;it<n;it++)
@@ -1109,6 +1118,10 @@ static int cs_vcount(const cs *A, css *S)
         cout<<"leftmost"<<endl;
         for (int it=0;it<n;it++)
             cout<<leftmost[it]<<'\t';
+        cout<<endl;
+        cout<<"pinv"<<endl;
+        for (int it=0;it<n;it++)
+            cout<<pinv[it]<<'\t';
         cout<<endl;
         cout<<"head"<<endl;
         for (int it=0;it<n;it++)
@@ -1134,6 +1147,7 @@ static int cs_vcount(const cs *A, css *S)
     * therefore V pattern is determined by pinv[i], where i is non-zero pattern of A;
     * the pinv makes PA matrix has non-zero at dignal entries
     * The row permutation pinv are ment to make matrix strong hall
+    * 还是通过pinv 把矩阵拍成了阶梯矩阵
     * *************************************************************/
     for (i = 0; i < m; i++)
         if (pinv[i] < 0)
@@ -1231,7 +1245,7 @@ csn *cs_qr(const cs*A, const css *S){
             /******************************/
             i = leftmost[Ai[p]];                /*find min col*/
             //cout<<"Ai[p] = "<<Ai[p]<<"  i = "<<i<<endl;
-            for (len = 0; w[i] != k; i = parent[i])
+            for (len = 0; w[i] != k; i = parent[i])/*traverse the whole clique for asymmetric matrix*/
             {
                 s[len++] = i;
                 w[i] = k;                       /*save max subtree, and mark i node*/
@@ -1239,7 +1253,11 @@ csn *cs_qr(const cs*A, const css *S){
             
             while (len > 0)
                 s[--top] = s[--len];            /*push path into stack*/
-            /******************************/
+            /**************
+             * x[pinv[Ai[p]]] = Ax[p] 
+             * in other word non-zero pattern of  A :
+             * A_{ik}^{k-1 iteration} = pinv[A_{ik}]
+             * ****************/
             i = pinv[Ai[p]];                    /*Is is how we determine V pattern : change row into trapezium*/
             x[i] = Ax[p];                       /*x[i] = A[i][col]*/
             cout<<"COL: "<<col<<"Ai[p] = "<<Ai[p]<<" i = "<<i<<"  Ax[p] = "<<Ax[p]<<endl;
@@ -1261,7 +1279,7 @@ csn *cs_qr(const cs*A, const css *S){
 
             x[i] = 0;
             if (parent[i] == k)
-                vnz = cs_scatter(V, i, 0, w, NULL, k, V, vnz);
+                vnz = cs_scatter(V, i, 0, w, NULL, k, V, vnz);//*k columns of V are set to zero 
         }
         //cs_print(R, 0);
         for (p = p1; p < vnz; p++)
