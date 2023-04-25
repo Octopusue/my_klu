@@ -14,6 +14,7 @@ using namespace std;
 #define CS_SUBSUB 1
 #define CS_DATE "20230414"
 #define CS_COPYRIGHT "liqun.su"
+#define csi int
 
 #define HEAD(k, j) (ata ? head[k] : j)
 #define NEXT(J) (ata ? next[J] : -1)

@@ -71,12 +71,16 @@ int main()
     cs *AT = cs_transpose(A, 1);
     cs *ATA = cs_multiply(AT, A);
     A = cs_sort(A);
+
+
+    csi order=1;
+    cs_amd(order, A);
     css *S = cs_sqr(0, A, 1);
     csn *SN = cs_qr(A, S);
 
     // cs_spfree(A);
     // A = AT;
-
+    
     cout<<A->nzmax<<"  "<<ATA->nzmax<<endl;
     int *post, *parent;
     parent = cs_etree(A, 1);

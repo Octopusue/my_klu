@@ -40,7 +40,8 @@ cs *cs_permute(const cs* A, const int *pinv, const int *q, int values);
 
 cs *cs_symperm(const cs* A, const int* pinv, int values);
 
-int *cs_amd(int order, const cs *A);
+// int *cs_amd(int order, const cs *A);
+csi *cs_amd (csi order, const cs *A);
 /**************************
 * Solving triangular systems
 * Mx=b;
