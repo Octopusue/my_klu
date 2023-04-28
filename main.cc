@@ -72,8 +72,9 @@ int main()
     cs *ATA = cs_multiply(AT, A);
     A = cs_sort(A);
 
-
+    
     csi order=1;
+    cs_maxtrans (A, order);
     cs_amd(order, A);
     css *S = cs_sqr(0, A, 1);
     csn *SN = cs_qr(A, S);

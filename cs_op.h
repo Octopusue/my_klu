@@ -94,6 +94,8 @@ csn *cs_chol(const cs *A, const css *S);
 css *cs_sqr(int order, const cs* A, int qr);
 csn *cs_qr(const cs*A, const css *S);
 
+csd *cs_scc (cs *A);
+csi *cs_maxtrans (const cs *A, csi seed);
 }
 
 

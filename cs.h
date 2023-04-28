@@ -51,7 +51,16 @@ typedef struct cs_numeric
     double *B;
 
 }csn;
-
+typedef struct cs_dmperm_results    /* cs_dmperm or cs_scc output */
+{
+    csi *p ;        /* size m, row permutation */
+    csi *q ;        /* size n, column permutation */
+    csi *r ;        /* size nb+1, block k is rows r[k] to r[k+1]-1 in A(p,q) */
+    csi *s ;        /* size nb+1, block k is cols s[k] to s[k+1]-1 in A(p,q) */
+    csi nb ;        /* # of blocks in fine dmperm decomposition */
+    csi rr [5] ;    /* coarse row decomposition */
+    csi cc [5] ;    /* coarse column decomposition */
+} csd ;
 
 css *cs_schol(int order, const cs *A);
 
@@ -66,8 +75,9 @@ void *cs_calloc(int n, size_t size);
 
 
 void *cs_free(void *p);
-
-
+csd *cs_dfree (csd *D);
+csd *cs_dalloc (csi m, csi n);
+csd *cs_ddone (csd *D, cs *C, void *w, csi ok);
 void *cs_realloc(void *p, int n, size_t size, int *ok);
 
 cs *cs_spfree(cs *A);

@@ -83,6 +83,35 @@ css *cs_sfree(css *S)
     cs_free(S->leftmost);
     return (css *)(cs_free(S));
 }
+/* allocate a cs_dmperm or cs_scc result */
+csd *cs_dalloc (csi m, csi n)
+{
+    csd *D ;
+    D = (csd *)cs_calloc (1, sizeof (csd)) ;
+    if (!D) return (NULL) ;
+    D->p = (csi *)cs_malloc (m, sizeof (csi)) ;
+    D->r = (csi *)cs_malloc (m+6, sizeof (csi)) ;
+    D->q = (csi *)cs_malloc (n, sizeof (csi)) ;
+    D->s = (csi *)cs_malloc (n+6, sizeof (csi)) ;
+    return ((!D->p || !D->r || !D->q || !D->s) ? cs_dfree (D) : D) ;
+}
+csd *cs_ddone (csd *D, cs *C, void *w, csi ok)
+{
+    cs_spfree (C) ;                     /* free temporary matrix */
+    cs_free (w) ;                       /* free workspace */
+    return (ok ? D : cs_dfree (D)) ;    /* return result if OK, else free it */
+}
+/* free a cs_dmperm or cs_scc result */
+csd *cs_dfree (csd *D)
+{
+    if (!D) return (NULL) ;     /* do nothing if D already NULL */
+    cs_free (D->p) ;
+    cs_free (D->q) ;
+    cs_free (D->r) ;
+    cs_free (D->s) ;
+    return ((csd *) cs_free (D)) ;  /* free the csd struct and return NULL */
+}
+
 cs *cs_spalloc(int m , int n, int nzmax, int values, int triplet)
 {
     cs *A = (cs*)cs_calloc(1, sizeof(cs));
