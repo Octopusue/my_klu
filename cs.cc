@@ -56,7 +56,7 @@ int show_raw_matrix(const cs *A, const char *filename){
     int n = A->n, m =A->m, *Ap = A->p, *Ai = A->i, p;
     double *Ax = A->x;
 
-    double **rawM, *colM;
+    double **rawM;
     rawM = (double **)malloc(m*sizeof(double *));
     if (!rawM) return 0;
 
@@ -76,9 +76,9 @@ int show_raw_matrix(const cs *A, const char *filename){
 
     for (int j = 0; j < n; j++)
     {
-        p = Ap[j];
-        for (int i = Ai[p]; i < Ai[p+1]; i++)
+        for (int p =Ap[j]; p < Ap[j+1]; p++)
         {
+            int i = Ai[p];
             rawM[i][j] = Ax[p];
         }
     }
@@ -95,6 +95,11 @@ int show_raw_matrix(const cs *A, const char *filename){
         fprintf(fout,"| \t\n");
     }
     fclose(fout);
+    for (int i = 0; i < m;i++)
+    {
+        free(rawM[i]); 
+    }
+    free(rawM);
     return 1;
 }
 

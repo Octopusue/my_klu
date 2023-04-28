@@ -65,8 +65,8 @@ int main()
    
     
     FILE *fp, *fout;
-    //fp = fopen("qr_tri", "r");
-    fp = fopen("CSparse/Matrix/ash219", "r");
+    fp = fopen("qr_tri_test", "r");
+    //fp = fopen("CSparse/Matrix/ash219", "r");
     //fp = fopen("CSparse/Matrix/mbeacxc", "r");
     //fp = fopen("CSparse/Matrix/t1", "r");
    
@@ -76,9 +76,12 @@ int main()
     cs *AT = cs_transpose(A, 1);
     cs *ATA = cs_multiply(AT, A);
     A = cs_sort(A);
-    //show_raw_matrix(A, filename);
+    //cs_print(A, 0);
+
+    A = cs_permute(A, NULL, cs_randperm(A->n, 1), 1);
+    show_raw_matrix(A, filename);
     
-    csi order=1;
+    csi order=0;
     cs_dmperm (A, order);
     cs_maxtrans (A, order);
     cs_amd(order, A);

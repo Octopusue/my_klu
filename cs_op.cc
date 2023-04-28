@@ -1818,7 +1818,19 @@ csd *cs_dmperm (const cs *A, csi seed)
     for (j = 0 ; j < n ; j++) wj [j] = -1 ;     /* unmark all cols for bfs */
     for (i = 0 ; i < m ; i++) wi [i] = -1 ;     /* unmark all rows for bfs */
     cs_bfs (A, n, wi, wj, q, imatch, jmatch, 1) ;       /* find C1, R1 from C0*/
+    for (int it = 0; it < m; it++)
+        cout<<wi[it]<<"\t";
+    cout<<endl;
+    for (int it = 0; it < n; it++)
+        cout<<wj[it]<<"\t";
+    cout<<endl;
     ok = cs_bfs (A, m, wj, wi, p, jmatch, imatch, 3) ;  /* find R3, C3 from R0*/
+    for (int it = 0; it < m; it++)
+        cout<<wi[it]<<"\t";
+    cout<<endl;
+    for (int it = 0; it < n; it++)
+        cout<<wj[it]<<"\t";
+    cout<<endl;
     if (!ok) return (cs_ddone (D, NULL, jmatch, 0)) ;
     cs_unmatched (n, wj, q, cc, 0) ;                    /* unmatched set C0 */
     cs_matched (n, wj, imatch, p, q, cc, rr, 1, 1) ;    /* set R1 and C1 */
@@ -1829,7 +1841,8 @@ csd *cs_dmperm (const cs *A, csi seed)
     /* --- Fine decomposition ----------------------------------------------- */
     pinv = cs_pinv (p, m) ;         /* pinv=p' */
     if (!pinv) return (cs_ddone (D, NULL, NULL, 0)) ;
-    C = cs_permute (A, pinv, q, 0) ;/* C=A(p,q) (it will hold A(R2,C2)) */
+    C = cs_permute (A, pinv, q, 1) ;/* C=A(p,q) (it will hold A(R2,C2)) todo*/
+    show_raw_matrix(C, "matchedM");
     cs_free (pinv) ;
     if (!C) return (cs_ddone (D, NULL, NULL, 0)) ;
     Cp = C->p ;
@@ -1882,6 +1895,7 @@ static void cs_augment (csi k, const cs *A, csi *jmatch, csi *cheap, csi *w,
         csi *js, csi *is, csi *ps)
 {
     csi found = 0, p, i = -1, *Ap = A->p, *Ai = A->i, head = 0, j ;
+    
     js [0] = k ;                        /* start with just node k in jstack */
     while (head >= 0)
     {
@@ -1890,6 +1904,7 @@ static void cs_augment (csi k, const cs *A, csi *jmatch, csi *cheap, csi *w,
         if (w [j] != k)                 /* 1st time j visited for kth path */
         {
             w [j] = k ;                 /* mark j as visited for kth path */
+            
             for (p = cheap [j] ; p < Ap [j+1] && !found ; p++)
             {
                 i = Ai [p] ;            /* try a cheap assignment (i,j) */
@@ -1907,6 +1922,7 @@ static void cs_augment (csi k, const cs *A, csi *jmatch, csi *cheap, csi *w,
         for (p = ps [head] ; p < Ap [j+1] ; p++)
         {
             i = Ai [p] ;                /* consider row i */
+            cout<<k<<"   "<<w [jmatch [i]]<<"   "<<jmatch [i]<<"   "<<i<<endl;
             if (w [jmatch [i]] == k) continue ; /* skip jmatch [i] if marked */
             ps [head] = p + 1 ;         /* pause dfs of node j */
             is [head] = i ;             /* i will be matched with j if found */
@@ -1916,14 +1932,21 @@ static void cs_augment (csi k, const cs *A, csi *jmatch, csi *cheap, csi *w,
         if (p == Ap [j+1]) head-- ;     /* node j is done; pop from stack */
     }                                   /* augment the match if path found: */
     if (found) for (p = head ; p >= 0 ; p--) jmatch [is [p]] = js [p] ;
+    cout<<k<<endl;
+    for (i =0; i < A->n; i++) 
+        cout<<"("<<i<<","<<jmatch[i]<<")"<<'\t';
+    cout<<endl;
+    
 }
 
 /* find a maximum transveral */
 csi *cs_maxtrans (const cs *A, csi seed)  /*[jmatch [0..m-1]; imatch [0..n-1]]*/
 {
+    
     csi i, j, k, n, m, p, n2 = 0, m2 = 0, *Ap, *jimatch, *w, *cheap, *js, *is,
         *ps, *Ai, *Cp, *jmatch, *imatch, *q ;
     cs *C ;
+    
     if (!CS_CSC (A)) return (NULL) ;                /* check inputs */
     n = A->n ; m = A->m ; Ap = A->p ; Ai = A->i ;
     w = jimatch = (csi *)cs_calloc (m+n, sizeof (csi)) ;   /* allocate result */
@@ -1968,8 +1991,8 @@ csi *cs_maxtrans (const cs *A, csi seed)  /*[jmatch [0..m-1]; imatch [0..n-1]]*/
     for (i = 0 ; i < m ; i++) if (jmatch [i] >= 0) imatch [jmatch [i]] = i ;
 
 
-    // for (i =0; i < n; i++) 
-    //     cout<<"("<<i<<","<<jmatch[i]<<")"<<endl;
+    for (i =0; i < n; i++) 
+        cout<<"("<<i<<","<<jmatch[i]<<")"<<endl;
 
     return (cs_idone (jimatch, (m2 < n2) ? C : NULL, w, 1)) ;
 }
