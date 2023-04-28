@@ -66,7 +66,7 @@ css *cs_schol(int order, const cs *A);
 
 extern "C" {
 void show_cs_details(cs *A);
-
+int show_raw_matrix(const cs *A, const char *filename);
 
 void *cs_malloc(int n, size_t size);
 

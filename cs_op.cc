@@ -1681,8 +1681,14 @@ csi *cs_randperm (csi n, csi seed)
 static csi cs_bfs (const cs *A, csi n, csi *wi, csi *wj, csi *queue,
     const csi *imatch, const csi *jmatch, csi mark)
 {
+    
     csi *Ap, *Ai, head = 0, tail = 0, j, i, p, j2 ;
     cs *C ;
+
+    for (i =0; i < A->n; i++) 
+        cout<<"("<<i<<","<<jmatch[i]<<")"<<endl;
+
+
     for (j = 0 ; j < n ; j++)           /* place all unmatched nodes in queue */
     {
         if (imatch [j] >= 0) continue ; /* skip j if matched */
@@ -1693,12 +1699,21 @@ static csi cs_bfs (const cs *A, csi n, csi *wi, csi *wj, csi *queue,
     C = (mark == 1) ? ((cs *) A) : cs_transpose (A, 0) ;
     if (!C) return (0) ;                /* bfs of C=A' to find R3,C3 from R0 */
     Ap = C->p ; Ai = C->i ;
+
+
+    for (int it = head; it < tail; it++)
+    {
+        j = queue[it];
+        cout<<"("<<imatch[j]<<","<<j<<")"<<endl;
+    } 
+        
     while (head < tail)                 /* while queue is not empty */
     {
         j = queue [head++] ;            /* get the head of the queue */
         for (p = Ap [j] ; p < Ap [j+1] ; p++)
         {
             i = Ai [p] ;
+            cout<<"("<<i<<","<<jmatch[i]<<")"<<endl;
             if (wi [i] >= 0) continue ; /* skip if i is marked */
             wi [i] = mark ;             /* i in set R1 (C3 if transpose) */
             j2 = jmatch [i] ;           /* traverse alternating path to j2 */
@@ -1953,8 +1968,8 @@ csi *cs_maxtrans (const cs *A, csi seed)  /*[jmatch [0..m-1]; imatch [0..n-1]]*/
     for (i = 0 ; i < m ; i++) if (jmatch [i] >= 0) imatch [jmatch [i]] = i ;
 
 
-    for (i =0; i < n; i++) 
-        cout<<"("<<i<<","<<jmatch[i]<<")"<<endl;
+    // for (i =0; i < n; i++) 
+    //     cout<<"("<<i<<","<<jmatch[i]<<")"<<endl;
 
     return (cs_idone (jimatch, (m2 < n2) ? C : NULL, w, 1)) ;
 }

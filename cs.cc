@@ -35,6 +35,70 @@ void show_cs_details(cs *A)
     cout<<"*****************"<<endl;
 }
 
+cs *ccs2tri(const cs *A){
+    int n = A->n, m =A->m, *Ap = A->p, *Ai = A->i, p;
+    double *Ax = A->x;
+
+    cs *triM = cs_spalloc(m, n, A->nzmax, 0, 1);
+    for (int j = 0; j < n; j++)
+    {
+        p = Ap[j];
+        for (int i = Ai[p]; i < Ai[p+1]; i++)
+        {
+            cs_entry(triM, i, j, Ax[p]);
+        }
+    }
+    return triM;
+}
+int show_raw_matrix(const cs *A, const char *filename){
+    
+    FILE *fout = fopen(filename, "w+"); 
+    int n = A->n, m =A->m, *Ap = A->p, *Ai = A->i, p;
+    double *Ax = A->x;
+
+    double **rawM, *colM;
+    rawM = (double **)malloc(m*sizeof(double *));
+    if (!rawM) return 0;
+
+    for (int i = 0; i < m;i++)
+    {
+        rawM[i] = (double *)calloc(n, sizeof(double));
+        if (!rawM[i]) 
+        {
+            for (int j = 0; j < i; j++)
+            {
+                free(rawM[j]);
+            }
+            free(rawM);
+            return 0;
+        }
+    }
+
+    for (int j = 0; j < n; j++)
+    {
+        p = Ap[j];
+        for (int i = Ai[p]; i < Ai[p+1]; i++)
+        {
+            rawM[i][j] = Ax[p];
+        }
+    }
+    for (int i = 0; i < m ; i++)
+    {
+        cout<<"|\t";
+        fprintf(fout, "|\t");
+        for (int j = 0; j < n ; j++)
+        {
+            cout<<rawM[i][j]<<'\t';
+            fprintf(fout, "%g\t", rawM[i][j]);
+        }
+        cout<<"|\t"<<endl;
+        fprintf(fout,"| \t\n");
+    }
+    fclose(fout);
+    return 1;
+}
+
+
 void *cs_malloc(int n, size_t size)
 {
     

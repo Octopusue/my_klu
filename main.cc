@@ -64,16 +64,22 @@ int main()
    
    
     
-    FILE *fp;
-    fp = fopen("qr_tri", "r");
+    FILE *fp, *fout;
+    //fp = fopen("qr_tri", "r");
+    fp = fopen("CSparse/Matrix/ash219", "r");
+    //fp = fopen("CSparse/Matrix/mbeacxc", "r");
+    //fp = fopen("CSparse/Matrix/t1", "r");
+   
+    const char *filename = "rawMatrix";
     cs *triMatrix = cs_load(fp);
     cs *A = cs_compress(triMatrix);
     cs *AT = cs_transpose(A, 1);
     cs *ATA = cs_multiply(AT, A);
     A = cs_sort(A);
-
+    //show_raw_matrix(A, filename);
     
     csi order=1;
+    cs_dmperm (A, order);
     cs_maxtrans (A, order);
     cs_amd(order, A);
     css *S = cs_sqr(0, A, 1);

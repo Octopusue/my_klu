@@ -96,6 +96,7 @@ csn *cs_qr(const cs*A, const css *S);
 
 csd *cs_scc (cs *A);
 csi *cs_maxtrans (const cs *A, csi seed);
+csd *cs_dmperm (const cs *A, csi seed);
 }
 
 
